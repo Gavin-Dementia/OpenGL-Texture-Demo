@@ -126,21 +126,27 @@ int main()
     // trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
     // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5)); 
     // trans = glm::translate(trans, glm::vec3(0.1f, -0.5f, 0.0f));
-    float lastTime = 0.0f;
-    float angle = 0.0f;
+    glm::mat4 modelMat;
+    modelMat = glm::rotate(modelMat, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
+    glm::mat4 viewMat;
+    viewMat = glm::translate(viewMat, glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::mat4 projMat;
+    projMat = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);   
+    // float lastTime = 0.0f;
+    // float angle = 0.0f;
 
     // 渲染循環
     while(!glfwWindowShouldClose(window))
-    {
-        float speed = 2.5f;
-        float currentTime = glfwGetTime();
-        float deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
+    // {
+    //     float speed = 2.5f;
+    //     float currentTime = glfwGetTime();
+    //     float deltaTime = currentTime - lastTime;
+    //     lastTime = currentTime;
 
-        angle += speed * deltaTime;
+    //     angle += speed * deltaTime;
 
-        glm::mat4 trans(1.0f);
-        trans = glm::rotate(trans, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    //     glm::mat4 trans(1.0f);
+    //     trans = glm::rotate(trans, angle, glm::vec3(0.0f, 0.0f, 1.0f));
         // 渲染
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -156,7 +162,11 @@ int main()
         testshader->use();
         glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureW"), 0);
         glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureF"), 3);
-        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
+        // glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
+        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
+        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
+        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
+
 
         // update the uniform color
         float timeValue         = glfwGetTime();
