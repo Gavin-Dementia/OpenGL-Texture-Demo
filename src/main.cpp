@@ -13,12 +13,69 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+// float vertices[] = {
+//     // positions          // colors           // texture coords
+//      0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+//      0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+//     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+//     -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+// };
+
 float vertices[] = {
-    // positions          // colors           // texture coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f), 
+    glm::vec3( 2.0f,  5.0f, -15.0f), 
+    glm::vec3(-1.5f, -2.2f, -2.5f),  
+    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3( 2.4f, -0.4f, -3.5f),  
+    glm::vec3(-1.7f,  3.0f, -7.5f),  
+    glm::vec3( 1.3f, -2.0f, -2.5f),  
+    glm::vec3( 1.5f,  2.0f, -2.5f), 
+    glm::vec3( 1.5f,  0.2f, -1.5f), 
+    glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
 unsigned int indices[] = {
@@ -63,7 +120,7 @@ int main()
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     Shader* testshader = new Shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
-    
+
     unsigned int  VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -76,12 +133,15 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);   // position attribute 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)) );
-    glEnableVertexAttribArray(1);   // color attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)) );
+    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)) );
+    // glEnableVertexAttribArray(1);   // color attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)) );
     glEnableVertexAttribArray(2);   // texture coord attribute
+
+    glEnable(GL_DEPTH_TEST);
+    // stbi_set_flip_vertically_on_load(true);
     
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -89,7 +149,6 @@ int main()
     glBindTexture(GL_TEXTURE_2D, texture);
 
     int width, height, nrChannels;
-    // stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load("C:/3Dproject/wall.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
@@ -102,7 +161,6 @@ int main()
         std::cout << "Failed to load texture0" << std::endl;
 
     stbi_image_free(data);
-
 
     unsigned int texture1;
     glGenTextures(1, &texture1);
@@ -119,66 +177,83 @@ int main()
     else
         std::cout << "Failed to load texture1" << std::endl;
 
-    stbi_image_free(data1);    
+    stbi_image_free(data1); 
 
+    
     //calculate transform matrix
     glm::mat4 trans(1.0f);    
     // trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
     // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5)); 
     // trans = glm::translate(trans, glm::vec3(0.1f, -0.5f, 0.0f));
-    glm::mat4 modelMat;
+    glm::mat4 modelMat(1.0f);
     modelMat = glm::rotate(modelMat, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
-    glm::mat4 viewMat;
+    glm::mat4 viewMat(1.0f);
     viewMat = glm::translate(viewMat, glm::vec3(0.0f, 0.0f, -3.0f));
-    glm::mat4 projMat;
+    glm::mat4 projMat(1.0f);
     projMat = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);   
-    // float lastTime = 0.0f;
-    // float angle = 0.0f;
-
-    // 渲染循環
+    
+    float lastTime = 0.0f;
+    float angle = 0.0f;
+    
+     // 渲染循環
     while(!glfwWindowShouldClose(window))
-    // {
-    //     float speed = 2.5f;
-    //     float currentTime = glfwGetTime();
-    //     float deltaTime = currentTime - lastTime;
-    //     lastTime = currentTime;
+    {
+        float speed = 2.5f;
+        float currentTime = glfwGetTime();
+        float deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        angle += speed * deltaTime;
+                
+        // trans = glm::rotate(trans, angle, glm::vec3(0.0f, 0.0f, 1.0f));(float)glfwGetTime() * glm::radians(50.0f)
+        modelMat = glm::rotate(modelMat, angle, glm::vec3(0.5f, 1.0f, 0.0f));
 
-    //     angle += speed * deltaTime;
-
-    //     glm::mat4 trans(1.0f);
-    //     trans = glm::rotate(trans, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        // 渲染
+        // 渲染 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, texture1);
-
+        
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        
+        // for (unsigned int i = 0; i < 10; i++)
+        // {
+        //     glm::mat4 model = glm::mat4(1.0f);
+        //     model = glm::translate(model, cubePositions[i]);
+        //     float angle = 20.0f * i; 
+        //     model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            
+        //     // testshader->use();
+            glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureW"), 0);
+            glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureF"), 3);
+        //     glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(model));
+        //     glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
+        //     glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
 
-        testshader->use();
-        glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureW"), 0);
-        glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureF"), 3);
-        // glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
+        //     glDrawArrays(GL_TRIANGLES, 0, 36);
+        // }
+       
+        // update the uniform color
+        // float timeValue         = glfwGetTime();
+        // float test              = sin(timeValue) / 1.0f + 0.5f; 
+        // int vertexColorLocation = glGetUniformLocation(testshader->ID, "ourColor");
+        // glUniform4f(vertexColorLocation, test, 0.0f, 1.0f - test, 1.0f);   
+        
+        // float timeValue  = glfwGetTime();
+        // float brightness = sin(timeValue) * 0.5f + 1.0f; // 0.5 ~ 1.5
+        // glUniform1f(glGetUniformLocation(testshader->ID, "brightness"), brightness);
+                
+        // // glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
         glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
         glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
         glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
-
-
-        // update the uniform color
-        float timeValue         = glfwGetTime();
-        // float test              = sin(timeValue) / 1.0f + 0.5f; 
-        // int vertexColorLocation = glGetUniformLocation(testshader->ID, "ourColor");
-        // glUniform4f(vertexColorLocation, test, 0.0f, 1.0f - test, 1.0f);
+        testshader->use();
         
-        float brightness = sin(timeValue) * 0.5f + 1.0f; // 0.5 ~ 1.5
-        glUniform1f(glGetUniformLocation(testshader->ID, "brightness"), brightness);
-
-
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
         // 事件與緩衝
         glfwSwapBuffers(window);

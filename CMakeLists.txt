@@ -4,7 +4,7 @@ project(OpenGLProject)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# === include path === need GLAD, GLM, GLFW
+# === include path === need GLAD, GLM, GLFW, stb_image
 include_directories(
     C:/openGL/glad/include
     C:/openGL/glm

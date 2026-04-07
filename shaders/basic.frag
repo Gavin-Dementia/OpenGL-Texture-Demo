@@ -1,6 +1,6 @@
 #version 330 core
 in vec2 TexCoord;
-in vec4 vertexColor;
+//in vec4 vertexColor;
 
 uniform sampler2D ourTextureW;
 uniform sampler2D ourTextureF;
@@ -15,7 +15,7 @@ void main()
 
     vec4 texColor = mix(tex1, tex2, 0.5);
 
-    // 避免過曝（可選）
-    FragColor = texColor * vertexColor;
+    // 避免過曝（可選）* vertexColor
+    FragColor = texColor ;
 }
 
