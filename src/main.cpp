@@ -6,21 +6,15 @@
 #include <GLFW/glfw3.h>
 #include "Shader.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Camera.h"
+#include "Texture.h"
+#include "stb_image.h"//first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
 
-// float vertices[] = {
-//     // positions          // colors           // texture coords
-//      0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-//      0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-//     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-//     -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-// };
+#define width_ 800
+#define height_ 600
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -93,9 +87,9 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
-    // Camera camera(glm::vec3(0.0f, 3.0f, 3.0f), 
-    //               glm::vec3(0.0f, 0.0f, 0.0f), 
-    //               glm::vec3(0.0f, 1.0f, 0.0f));
+// Camera camera(glm::vec3(0.0f, 3.0f, 3.0f), 
+//               glm::vec3(0.0f, 0.0f, 0.0f), 
+//               glm::vec3(0.0f, 1.0f, 0.0f));
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
               glm::vec3(0.0f, 1.0f, 0.0f), 
               0.0f);
@@ -143,7 +137,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
     // 建立窗口
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Learn OpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width_, height_, "Learn OpenGL", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -159,14 +153,16 @@ int main()
         return -1;
     }
     
-    glViewport(0, 0, 800, 600);    
+    glViewport(0, 0, width_, height_);    
     glEnable(GL_DEPTH_TEST);
     // stbi_set_flip_vertically_on_load(true);
     // glEnable(GL_CULL_FACE);
     // glCullFace(GL_BACK);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    Shader* testshader = new Shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
+    Shader* testshader   = new Shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
+    Texture* wallTexture = new Texture("C:/3Dproject/wall.jpg");
+    Texture* frogTexture = new Texture("C:/3Dproject/frog.jpg");
 
     unsigned int  VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -187,70 +183,24 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)) );
     glEnableVertexAttribArray(2);   // texture coord attribute
 
-    
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("C:/3Dproject/wall.jpg", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-        std::cout << "Failed to load texture0" << std::endl;
-
-    stbi_image_free(data);
-
-    unsigned int texture1;
-    glGenTextures(1, &texture1);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    unsigned char *data1 = stbi_load("C:/3Dproject/frog.jpg", &width, &height, &nrChannels, 0);
-    if (data1)    
-    { 
-        GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data1);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-        std::cout << "Failed to load texture1" << std::endl;
-
-    stbi_image_free(data1); 
-    
-    //calculate matrix
-    // glm::mat4 trans(1.0f);    
-    // trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
-    // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5)); 
-    // trans = glm::translate(trans, glm::vec3(0.1f, -0.5f, 0.0f));
-
      // 渲染循環
     while(!glfwWindowShouldClose(window))
     {
-        // input
-        processInput(window);
+        processInput(window);// input
 
-        // 渲染 
+        // render 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-        testshader->setInt("ourTextureW", 0);
-        testshader->setInt("ourTextureF", 3);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        
+        testshader->setInt("ourTextureW", 0);//wallTexture
+        testshader->setInt("ourTextureF", 3);//frogTexture
+        wallTexture->bind(0);
+        frogTexture->bind(3);
+
         testshader->use();
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        
+
         for (unsigned int i = 0; i < 10; i++)
         {
             // calculate the model matrix for each object and pass it to shader before drawing
@@ -259,7 +209,7 @@ int main()
             modelMat = glm::rotate(modelMat, glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
 
             glm::mat4 viewMat = camera.GetViewMatrix();
-            glm::mat4 projMat = glm::perspective(glm::radians((camera.Zoom)), (float)width/(float)height, 0.1f, 100.0f);
+            glm::mat4 projMat = glm::perspective(glm::radians((camera.Zoom)), (float)width_/(float)height_, 0.1f, 100.0f);
 
             testshader->setMat4("modelMat", modelMat);        
             testshader->setMat4("viewMat", viewMat);
@@ -272,16 +222,7 @@ int main()
         glfwSetCursorPosCallback(window, mouse_callback);
         glfwSetScrollCallback(window,  scroll_callback);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // 隱藏滑鼠
-        // update the uniform color
-        // float timeValue         = glfwGetTime();
-        // float test              = sin(timeValue) / 1.0f + 0.5f; 
-        // int vertexColorLocation = glGetUniformLocation(testshader->ID, "ourColor");
-        // glUniform4f(vertexColorLocation, test, 0.0f, 1.0f - test, 1.0f);   
-        
-        // float timeValue  = glfwGetTime();
-        // float brightness = sin(timeValue) * 0.5f + 1.0f; // 0.5 ~ 1.5
-        // glUniform1f(glGetUniformLocation(testshader->ID, "brightness"), brightness);
-        
+
         // 事件與緩衝
         glfwSwapBuffers(window);
         glfwPollEvents();
