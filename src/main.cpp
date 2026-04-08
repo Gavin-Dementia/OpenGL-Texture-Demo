@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Camera.h"
 
 // float vertices[] = {
 //     // positions          // colors           // texture coords
@@ -87,6 +88,50 @@ unsigned int indices[] = {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {  glViewport(0, 0, width, height);  }
 
+float lastX = 400, lastY = 300;
+bool firstMouse = true;
+
+float deltaTime = 0.0f; // time between current frame and last frame
+float lastFrame = 0.0f;
+    // Camera camera(glm::vec3(0.0f, 3.0f, 3.0f), 
+    //               glm::vec3(0.0f, 0.0f, 0.0f), 
+    //               glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
+              glm::vec3(0.0f, 1.0f, 0.0f), 
+              0.0f);
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse) { lastX = xpos; lastY = ypos; firstMouse = false; }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // y reversed
+    lastX = xpos; lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{  camera.ProcessMouseScroll(yoffset); }
+
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(0, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(1, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(2, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(3, deltaTime);
+}
 
 #if 1
 int main()
@@ -114,7 +159,9 @@ int main()
         return -1;
     }
     
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 800, 600);    
+    glEnable(GL_DEPTH_TEST);
+    // stbi_set_flip_vertically_on_load(true);
     // glEnable(GL_CULL_FACE);
     // glCullFace(GL_BACK);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -140,8 +187,6 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)) );
     glEnableVertexAttribArray(2);   // texture coord attribute
 
-    glEnable(GL_DEPTH_TEST);
-    // stbi_set_flip_vertically_on_load(true);
     
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -178,64 +223,55 @@ int main()
         std::cout << "Failed to load texture1" << std::endl;
 
     stbi_image_free(data1); 
-
     
-    //calculate transform matrix
-    glm::mat4 trans(1.0f);    
+    //calculate matrix
+    // glm::mat4 trans(1.0f);    
     // trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
     // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5)); 
     // trans = glm::translate(trans, glm::vec3(0.1f, -0.5f, 0.0f));
-    glm::mat4 modelMat(1.0f);
-    modelMat = glm::rotate(modelMat, glm::radians(-55.0f), glm::vec3(1.0, 0.0, 0.0));
-    glm::mat4 viewMat(1.0f);
-    viewMat = glm::translate(viewMat, glm::vec3(0.0f, 0.0f, -3.0f));
-    glm::mat4 projMat(1.0f);
-    projMat = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);   
-    
-    float lastTime = 0.0f;
-    float angle = 0.0f;
-    
+
      // 渲染循環
     while(!glfwWindowShouldClose(window))
     {
-        float speed = 2.5f;
-        float currentTime = glfwGetTime();
-        float deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-        angle += speed * deltaTime;
-                
-        // trans = glm::rotate(trans, angle, glm::vec3(0.0f, 0.0f, 1.0f));(float)glfwGetTime() * glm::radians(50.0f)
-        modelMat = glm::rotate(modelMat, angle, glm::vec3(0.5f, 1.0f, 0.0f));
+        // input
+        processInput(window);
 
         // 渲染 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        
+
+        testshader->setInt("ourTextureW", 0);
+        testshader->setInt("ourTextureF", 3);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, texture1);
         
+        testshader->use();
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         
-        // for (unsigned int i = 0; i < 10; i++)
-        // {
-        //     glm::mat4 model = glm::mat4(1.0f);
-        //     model = glm::translate(model, cubePositions[i]);
-        //     float angle = 20.0f * i; 
-        //     model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            
-        //     // testshader->use();
-            glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureW"), 0);
-            glUniform1i(glGetUniformLocation(testshader->ID, "ourTextureF"), 3);
-        //     glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(model));
-        //     glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
-        //     glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
+        for (unsigned int i = 0; i < 10; i++)
+        {
+            // calculate the model matrix for each object and pass it to shader before drawing
+            glm::mat4 modelMat = glm::mat4(1.0f);
+            modelMat = glm::translate(modelMat, cubePositions[i]);
+            modelMat = glm::rotate(modelMat, glm::radians(20.0f * i), glm::vec3(1.0f, 0.3f, 0.5f));
 
-        //     glDrawArrays(GL_TRIANGLES, 0, 36);
-        // }
-       
+            glm::mat4 viewMat = camera.GetViewMatrix();
+            glm::mat4 projMat = glm::perspective(glm::radians((camera.Zoom)), (float)width/(float)height, 0.1f, 100.0f);
+
+            testshader->setMat4("modelMat", modelMat);        
+            testshader->setMat4("viewMat", viewMat);
+            testshader->setMat4("projMat", projMat);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }       
+
+        glfwSetCursorPosCallback(window, mouse_callback);
+        glfwSetScrollCallback(window,  scroll_callback);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // 隱藏滑鼠
         // update the uniform color
         // float timeValue         = glfwGetTime();
         // float test              = sin(timeValue) / 1.0f + 0.5f; 
@@ -245,20 +281,16 @@ int main()
         // float timeValue  = glfwGetTime();
         // float brightness = sin(timeValue) * 0.5f + 1.0f; // 0.5 ~ 1.5
         // glUniform1f(glGetUniformLocation(testshader->ID, "brightness"), brightness);
-                
-        // // glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
-        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
-        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
-        glUniformMatrix4fv(glGetUniformLocation(testshader->ID, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
-        testshader->use();
-        
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
         // 事件與緩衝
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    // optional: de-allocate all resources once they've outlived their purpose:
+    // ------------------------------------------------------------------------
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
 
     std::cin.get();
     delete testshader;

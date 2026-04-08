@@ -21,6 +21,7 @@ link_directories(
 set(SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/main.cpp
     ${PROJECT_SOURCE_DIR}/src/Shader.cpp
+    ${PROJECT_SOURCE_DIR}/src/Camera.cpp
     C:/openGL/glad/include/glad/glad.c
 )
 
