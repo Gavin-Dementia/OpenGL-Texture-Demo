@@ -11,7 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Camera.h"
 #include "Texture.h"
-#include "stb_image.h"//first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
+//"stb_image.h" first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
 
 #define width_ 800
 #define height_ 600
