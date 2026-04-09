@@ -82,7 +82,6 @@ public:
     }
 
     unsigned int VAO, VBO;
-
 };
 
 #endif
