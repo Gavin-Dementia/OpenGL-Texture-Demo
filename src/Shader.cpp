@@ -127,7 +127,7 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
         if(!success)
         {
             glGetProgramInfoLog(ID, 1024, NULL, infoLog);
-            std::cout << "ERROR: " << infoLog << std::endl;
+            std::cout << ID << "ERROR: " << infoLog << std::endl;
         }
         else return;
     }

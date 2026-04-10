@@ -109,18 +109,18 @@ int main()
     // ---------------------------
     Shader* testshader   = new Shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
     Shader* lightShader  = new Shader("C:/3Dproject/shaders/light.vert", "C:/3Dproject/shaders/light.frag");
-    Texture* wallTexture = new Texture("C:/3Dproject/wall.jpg");
-    Texture* frogTexture = new Texture("C:/3Dproject/frog.jpg");
+    Texture* boxTexture  = new Texture("C:/3Dproject/box.png");
+    Texture* box_specular  = new Texture("C:/3Dproject/box_specular.png");
     Cube cube;// Our cube mesh class
     
-    // Cube positions in a 4x4 grid
+    // Cube positions in a 3x3 grid
     // ---------------------------
-    glm::vec3 cubePositions[16];
+    glm::vec3 cubePositions[9];
     int index = 0;
     float spacing = 2.5f;
-    for (int row = 0; row < 4; row++)
+    for (int row = 0; row < 3; row++)
     {
-        for (int col = 0; col < 4; col++)
+        for (int col = 0; col < 3; col++)
         {
             cubePositions[index++] = glm::vec3(
                 (col - 1.5f) * spacing,  // center along x
@@ -133,14 +133,53 @@ int main()
     // Light cube setup
     // ---------------------------
     float lightCubeVertices[] = {
-        // positions only (36 vertices for 6 faces)
+        // back face
         -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
         -0.5f,  0.5f, -0.5f,
         -0.5f, -0.5f, -0.5f,
-        // ... repeat for other 5 faces
+
+        // front face
+        -0.5f, -0.5f,  0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+
+        // left face
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+
+        // right face
+        0.5f,  0.5f,  0.5f,
+        0.5f,  0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+
+        // bottom face
+        -0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        // top face
+        -0.5f,  0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        0.5f,  0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f
     };
 
     unsigned int lightVAO, lightVBO;
@@ -151,7 +190,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(lightCubeVertices), lightCubeVertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
@@ -183,7 +222,7 @@ int main()
 
         // Clear screen
         // ---------------------------
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         
         float time = glfwGetTime();
@@ -191,15 +230,21 @@ int main()
         // Update light position (moving light)
         // ---------------------------
         glm::vec3 lightPos;
-        lightPos.x = sin(time) * 6.5f;
-        lightPos.y = sin(time) * 5.0f;
-        lightPos.z = cos(time) * 6.5f;
+        // lightPos.x = sin(time) * 3.5f;
+        // lightPos.y = sin(time) * 3.0f;
+        // lightPos.z = cos(time) * 3.5f;
+        lightPos.x = -sin(1.0f) * 1.5f;
+        lightPos.y = sin(1.0f) * 1.5f;
+        lightPos.z = cos(0.0f) * 1.5f;
         // Update light color (dynamic color)
         // ---------------------------
         glm::vec3 lightColor;
-        lightColor.x = sin(glfwGetTime() * 1.0f);
-        lightColor.y = sin(glfwGetTime() * 0.7f);
-        lightColor.z = sin(glfwGetTime() * 0.3f);
+        // lightColor.x = sin(glfwGetTime() * 1.0f);
+        // lightColor.y = sin(glfwGetTime() * 0.7f);
+        // lightColor.z = sin(glfwGetTime() * 0.3f);
+        lightColor.x = 1.0f;
+        lightColor.y = 1.0f;
+        lightColor.z = 1.0f;
         
         glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
@@ -216,25 +261,31 @@ int main()
         testshader->setMat4("projMat", projMat);
         testshader->setVec3("objectColor", 1.0f, 1.0f, 1.0f);
         testshader->setVec3("cameraPos", camera.Position);
-        testshader->setVec3("material.ambient", 0.1f, 0.1f, 0.1f);
-        testshader->setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-        testshader->setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        testshader->setFloat("material.shininess", 32.0f);
+        // testshader->setVec3("material.ambient", 0.1f, 0.1f, 0.1f);
+        testshader->setInt("material.diffuse", 0);//boxTexture
+        // testshader->setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        // testshader->setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        testshader->setInt("material.specular", 1);//box_specular
+        testshader->setFloat("material.shininess", 128.0f);
+
+        testshader->setFloat("light.constant",  1.0f);
+        testshader->setFloat("light.linear",    0.1f);
+        testshader->setFloat("light.quadratic", 0.0016f);
+
         testshader->setVec3("light.position", lightPos);
         testshader->setVec3("light.ambient", ambientColor);
         testshader->setVec3("light.diffuse", diffuseColor);
-        testshader->setVec3("light.specular", glm::vec3(1.0f)); // 白光
-        // testshader->setInt("ourTextureW", 0);//wallTexture
+        testshader->setVec3("light.specular", glm::vec3(0.2f)); // 白光
         // testshader->setInt("ourTextureF", 3);//frogTexture
-        // wallTexture->bind(0);
-        // frogTexture->bind(3);
+        boxTexture->bind(0);
+        box_specular->bind(1);
        
-        for (unsigned int i = 0; i < 16; i++)
+        for (unsigned int i = 0; i < 9; ++i)
         {
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 modelMat = glm::mat4(1.0f);
             modelMat = glm::translate(modelMat, cubePositions[i]);
-            modelMat = glm::rotate(modelMat, glm::radians(sin(time) *5 * i), glm::vec3(1.0f, 0.3f, 0.5f));
+            // modelMat = glm::rotate(modelMat, glm::radians(sin(time) *5 * i), glm::vec3(1.0f, 0.3f, 0.5f));
 
             testshader->setMat4("modelMat", modelMat);        
             testshader->setMat4("viewMat", viewMat);
@@ -263,8 +314,8 @@ int main()
 
     // Cleanup
     // ---------------------------
-    delete wallTexture;
-    delete frogTexture;
+    delete boxTexture;
+    delete box_specular;
     delete testshader;
     delete lightShader;
 
