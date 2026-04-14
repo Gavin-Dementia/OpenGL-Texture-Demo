@@ -30,16 +30,21 @@ cd build
 cmake ..
 cmake --build .
 ```
+---
 
 ## Dependencies
 
+```bash
 GLFW
 GLAD
 stb_image
 GLM
+```
+---
 
 ## Structure
 
+```bash
 src/
  ├─ core/        # Renderer
  ├─ graphics/    # Shader / Texture
@@ -47,8 +52,11 @@ src/
  ├─ scene/       # Scene & Light management
 include/
 shaders/
+```
+---
 
 ## Current Architecture
+
 Scene contains:
 Objects (Mesh + Transform)
 Light data (Dir / Point / Spot)
@@ -60,18 +68,21 @@ Mesh abstraction:
 Cube implements Mesh interface
 Status
 
+```bash
 ✔ Texture rendering
 ✔ Lighting system (Phong)
 ✔ Camera movement
 ✔ Scene system
 ✔ Renderer abstraction
+```
+---
 
-## Phase 1 – opengl tutorial c++ (** FIN~ **)
+## Phase 1 – opengl tutorial c++ ( ~FIN~ )
+
 - cube rendering
 - texture mapping
 - basic lighting
 - camera system
-
 
 ## Phase 2 – Engine Completion (In Progress)
 
@@ -88,6 +99,7 @@ Status
 - Hybrid rasterization + ray tracing pipeline
 
 ## Phase 4 (GPU Acceleration)
+
 - CUDA/OpenGL interop experiments
 - Particle system simulation
 - Compute shader-based rendering
