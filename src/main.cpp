@@ -12,6 +12,8 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Cube.h"
+#include "Scene.h"
+#include "Renderer.h"
 //"stb_image.h" first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
 
 #define width_ 1260
@@ -65,8 +67,7 @@ void processInput(GLFWwindow* window, float deltaTime)
 
 #if 1
 int main()
-{
-    // Initialize GLFW
+{// Initialize GLFW
     // ---------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -105,237 +106,107 @@ int main()
     glfwSetScrollCallback(window,  scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // 隱藏滑鼠
 
-    // Load shaders and textures
-    // ---------------------------
-    Shader* testshader   = new Shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
-    Shader* lightShader  = new Shader("C:/3Dproject/shaders/light.vert", "C:/3Dproject/shaders/light.frag");
-    Texture* boxTexture  = new Texture("C:/3Dproject/box.png");
-    Texture* box_specular  = new Texture("C:/3Dproject/box_specular.png");
-    Cube cube;// Our cube mesh class
-    
-    // Cube positions in a 3x3 grid
-    // ---------------------------
+    // =======================
+    // Shader / Texture
+    // =======================
+    Shader shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
+    Shader lightShader("C:/3Dproject/shaders/light.vert", "C:/3Dproject/shaders/light.frag");
+    Texture diffuseTex("C:/3Dproject/box.png");
+    Texture specularTex("C:/3Dproject/box_specular.png");
+
+    // =======================
+    // Scene / Renderer
+    // =======================
+    Scene scene;
+    Renderer renderer;
+
+    Cube* cube = new Cube();
+
+    // cube positions
     glm::vec3 cubePositions[9];
-    int index = 0;
+    int idx = 0;
     float spacing = 2.5f;
-    for (int row = 0; row < 3; row++)
+
+    for (int r = 0; r < 3; r++)
     {
-        for (int col = 0; col < 3; col++)
+        for (int c = 0; c < 3; c++)
         {
-            cubePositions[index++] = glm::vec3(
-                (col - 1.5f) * spacing,  // center along x
-                0.0f,                     // y
-                (1.5f - row) * spacing    // z (forward)
+            cubePositions[idx++] = glm::vec3(
+                (c - 1.5f) * spacing,
+                0.0f,
+                (1.5f - r) * spacing
             );
         }
     }
 
-    // Light cube setup
-    // ---------------------------
-    float lightCubeVertices[] = {
-        // back face
-        -0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f,
-        0.5f,  0.5f, -0.5f,
-        0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
+    // =======================
+    // Add objects to Scene
+    // =======================
+    for (int i = 0; i < 9; i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePositions[i]);
 
-        // front face
-        -0.5f, -0.5f,  0.5f,
-        0.5f, -0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
+        scene.objects.push_back({cube, model});
+    }
 
-        // left face
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
+    // =======================
+    // Lights
+    // =======================
+    scene.lights.dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
+    scene.lights.dirLight.ambient  = glm::vec3(0.05f);
+    scene.lights.dirLight.diffuse  = glm::vec3(0.4f);
+    scene.lights.dirLight.specular = glm::vec3(0.5f);
 
-        // right face
-        0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f,
+    for (int i = 0; i < 2; i++)
+    {
+        scene.lights.pointLights.push_back({
+            cubePositions[i],
+            1.0f, 0.09f, 0.032f,
+            glm::vec3(0.05f),
+            glm::vec3(0.8f),
+            glm::vec3(1.0f)
+        });
+    }
 
-        // bottom face
-        -0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f,  0.5f,
-        0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f,
-
-        // top face
-        -0.5f,  0.5f, -0.5f,
-        0.5f,  0.5f, -0.5f,
-        0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f
-    };
-
-    unsigned int lightVAO, lightVBO;
-    glGenVertexArrays(1, &lightVAO);
-    glGenBuffers(1, &lightVBO);
-
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(lightCubeVertices), lightCubeVertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(0);
-    
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    // glEnableVertexAttribArray(0);   // position attribute 
-    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)) );
-    // glEnableVertexAttribArray(1);   // color attribute
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)) );
-    // glEnableVertexAttribArray(2);   // texture coord attribute
-    // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)) );
-    // glEnableVertexAttribArray(3);   // Normal coord attribute
-
-    // Timing variables
-    // ---------------------------    
-    float deltaTime = 0.0f; // time between current frame and last frame
+    // =======================
+    // Timing
+    // =======================
+    float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    // Render loop
-    // ---------------------------
-    while(!glfwWindowShouldClose(window))
-    {        
-        // Frame timing
-        // ---------------------------
+    // =======================
+    // Render Loop
+    // =======================
+    while (!glfwWindowShouldClose(window))
+    {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        processInput(window, deltaTime);// input
 
-        // Clear screen
-        // ---------------------------
-        glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        
-        float time = glfwGetTime();
+        processInput(window, deltaTime);
 
-        // Update light position (moving light)
-        // ---------------------------
-        glm::vec3 lightPos;
-        // lightPos.x = sin(time) * 3.5f;
-        // lightPos.y = sin(time) * 3.0f;
-        // lightPos.z = cos(time) * 3.5f;
-        lightPos.x = -sin(1.0f) * 1.5f;
-        lightPos.y = sin(1.0f) * 1.5f;
-        lightPos.z = cos(0.0f) * 1.5f;
-        // Update light color (dynamic color)
-        // ---------------------------
-        glm::vec3 lightColor;
-        // lightColor.x = sin(glfwGetTime() * 1.0f);
-        // lightColor.y = sin(glfwGetTime() * 0.7f);
-        // lightColor.z = sin(glfwGetTime() * 0.3f);
-        lightColor.x = 1.0f;
-        lightColor.y = 1.0f;
-        lightColor.z = 1.0f;
-        
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+        scene.update(deltaTime);
 
-        // Camera matrices
-        // ---------------------------
-        glm::mat4 projMat = glm::perspective(glm::radians((camera.Zoom)), (float)width_/(float)height_, 0.1f, 100.0f);
-        glm::mat4 viewMat = camera.GetViewMatrix(); 
+        // bind textures（交給 renderer 前）
+        shader.use();
+        shader.setInt("material.diffuse", 0);
+        shader.setInt("material.specular", 1);
+        shader.setFloat("material.shininess", 128.0f);
 
-        // Draw cubes with lighting shader
-        // ---------------------------
-        testshader->use();
-        testshader->setMat4("viewMat", viewMat);
-        testshader->setMat4("projMat", projMat);
-        testshader->setVec3("objectColor", 1.0f, 1.0f, 1.0f);
-        testshader->setVec3("cameraPos", camera.Position);
-        // testshader->setVec3("material.ambient", 0.1f, 0.1f, 0.1f);
-        testshader->setInt("material.diffuse", 0);//boxTexture
-        // testshader->setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-        // testshader->setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        testshader->setInt("material.specular", 1);//box_specular
-        testshader->setFloat("material.shininess", 128.0f);
+        diffuseTex.bind(0);
+        specularTex.bind(1);
 
-        testshader->setFloat("light.constant",  1.0f);
-        testshader->setFloat("light.linear",    0.1f);
-        testshader->setFloat("light.quadratic", 0.0016f);
+        renderer.render(scene, shader, lightShader, camera, width_, height_);
 
-        testshader->setVec3("light.position", lightPos);
-        testshader->setVec3("light.ambient", ambientColor);
-        testshader->setVec3("light.diffuse", diffuseColor);
-        testshader->setVec3("light.specular", glm::vec3(0.2f)); // 白光
-        // testshader->setInt("ourTextureF", 3);//frogTexture
-        boxTexture->bind(0);
-        box_specular->bind(1);
-       
-        for (unsigned int i = 0; i < 9; ++i)
-        {
-            // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 modelMat = glm::mat4(1.0f);
-            modelMat = glm::translate(modelMat, cubePositions[i]);
-            // modelMat = glm::rotate(modelMat, glm::radians(sin(time) *5 * i), glm::vec3(1.0f, 0.3f, 0.5f));
-
-            testshader->setMat4("modelMat", modelMat);        
-            testshader->setMat4("viewMat", viewMat);
-            testshader->setMat4("projMat", projMat);
-
-            cube.draw();
-        }        
-        // Draw light cube
-        // ---------------------------
-        lightShader->use();
-        glm::mat4 modelLight = glm::mat4(1.0f);
-        modelLight = glm::translate(modelLight, lightPos);
-        modelLight = glm::scale(modelLight, glm::vec3(0.2f));
-        lightShader->setMat4("modelLight", modelLight);
-        lightShader->setMat4("viewMat", viewMat);
-        lightShader->setMat4("projMat", projMat);
-
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        // Swap buffers and poll events
-        // ---------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup
-    // ---------------------------
-    delete boxTexture;
-    delete box_specular;
-    delete testshader;
-    delete lightShader;
-
+    delete cube;
     glfwTerminate();
     return 0;
 }
-#endif
-//Resource Manager
-#if 0
-int main()//test
-{
-   glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
-   glm::mat4 trans;
 
-   trans= glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
-   vec= trans * vec;
-
-   std::cout << vec.x << vec.y << vec.z << std::endl;
-
-    return 0;
-}
 #endif
 
