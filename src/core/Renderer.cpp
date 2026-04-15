@@ -1,29 +1,19 @@
 #include "Renderer.h"
 
 void Renderer::render(Scene& scene, Shader& shader,
-                      Shader& lightShader, Camera& camera, 
+                      Shader& lightShader, Camera& camera,
                       float width_, float height_)
 {
-    // =======================
-    // Clear
+    glEnable(GL_DEPTH_TEST);
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // =======================
-    // Camera
     uploadCamera(shader, camera, width_, height_);
-
-    // =======================
-    // Lights
     uploadLights(shader, scene);
 
-    // =======================
-    // Draw Objects
     drawObjects(scene, shader);
-
-    // =======================
-    // Draw Light Objects (for visualization)
-    drawLightObjects(scene, lightShader, camera);
+    drawLightObjects(scene, lightShader, camera, width_, height_);
 }
 
 void Renderer::uploadCamera(Shader& shader, Camera& camera,
@@ -45,17 +35,20 @@ void Renderer::uploadCamera(Shader& shader, Camera& camera,
 
 void Renderer::uploadLights(Shader& shader, Scene& scene)
 {
+    shader.use();
     auto& lights = scene.lights;
-    // DirLight
+
     shader.setVec3("dirLight.direction", lights.dirLight.direction);
     shader.setVec3("dirLight.ambient", lights.dirLight.ambient);
     shader.setVec3("dirLight.diffuse", lights.dirLight.diffuse);
     shader.setVec3("dirLight.specular", lights.dirLight.specular);
-    // PointLights
+
+    shader.setInt("numPointLights", (int)lights.pointLights.size());
+
     for (int i = 0; i < lights.pointLights.size(); i++)
     {
+        const auto& l = lights.pointLights[i];
         std::string base = "pointLights[" + std::to_string(i) + "]";
-        auto& l = lights.pointLights[i];
 
         shader.setVec3(base + ".position", l.position);
         shader.setFloat(base + ".constant", l.constant);
@@ -65,33 +58,57 @@ void Renderer::uploadLights(Shader& shader, Scene& scene)
         shader.setVec3(base + ".diffuse", l.diffuse);
         shader.setVec3(base + ".specular", l.specular);
     }
-    // SpotLight
-    shader.setVec3("spotLight.position", lights.spotLight.position);
-    shader.setVec3("spotLight.direction", lights.spotLight.direction);
+
+    auto& s = lights.spotLight;
+
+    shader.setVec3("spotLight.position", s.position);
+    shader.setVec3("spotLight.direction", s.direction);
+    shader.setFloat("spotLight.cutOff", s.cutOff);
+    shader.setFloat("spotLight.outerCutOff", s.outerCutOff);
+
+    shader.setFloat("spotLight.constant", s.constant);
+    shader.setFloat("spotLight.linear", s.linear);
+    shader.setFloat("spotLight.quadratic", s.quadratic);
+
+    shader.setVec3("spotLight.ambient", s.ambient);
+    shader.setVec3("spotLight.diffuse", s.diffuse);
+    shader.setVec3("spotLight.specular", s.specular);
 }
 
 void Renderer::drawObjects(Scene& scene, Shader& shader)
 {
     shader.use();
 
-    for (auto& obj : scene.objects)
+    for (auto& group : scene.renderGroups)
     {
-        shader.setMat4("modelMat", obj.model);
-        obj.mesh->draw();
+        if (group.models.empty())
+            continue;
+
+        // upload instance buffer only when dirty
+        if (group.instanceDirty)
+        {
+            group.mesh->setInstances(group.models);
+            group.instanceDirty = false;
+        }
+
+        shader.setBool("isEmissive", group.isEmissive);
+        shader.setVec3("emissiveColor", group.emissiveColor);
+
+        group.mesh->drawInstanced((int)group.models.size());
     }
 }
 
 void Renderer::drawLightObjects(Scene& scene,
                                 Shader& lightShader,
-                                Camera& camera)
+                                Camera& camera,
+                                float width, float height)
 {
     lightShader.use();
 
-    // camera matrices should still be set
     glm::mat4 viewMat = camera.GetViewMatrix();
     glm::mat4 projMat = glm::perspective(
         glm::radians(camera.Zoom),
-        1.0f,  // or pass width/height if needed
+        width / height,
         0.1f,
         100.0f
     );
@@ -99,9 +116,9 @@ void Renderer::drawLightObjects(Scene& scene,
     lightShader.setMat4("viewMat", viewMat);
     lightShader.setMat4("projMat", projMat);
 
-    for (auto& obj : scene.lightObjects)
+    for (auto& obj : scene.lightVisuals)
     {
-        lightShader.setMat4("modelMat", obj.model);
+        lightShader.setMat4("modelLight", obj.getModel());
         obj.mesh->draw();
     }
 }

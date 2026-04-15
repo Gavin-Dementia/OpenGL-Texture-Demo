@@ -1,4 +1,5 @@
 #include "Cube.h"
+#include <glm/glm.hpp>
 
 Cube::Cube()
 {
@@ -67,6 +68,8 @@ Cube::Cube()
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+    // prepare instance attributes for instanced rendering
+    setupInstanceBuffer();
 }
 
 Cube::~Cube()
@@ -79,5 +82,11 @@ void Cube::draw()
 {
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void Cube::drawInstanced(int count)
+{
+    glBindVertexArray(VAO);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, count);
 }
 

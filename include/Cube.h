@@ -11,6 +11,7 @@ public:
     ~Cube() override;
 
     void draw() override;
+    void drawInstanced(int count) override;
 };
 
 #endif

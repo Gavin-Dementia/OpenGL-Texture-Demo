@@ -4,11 +4,12 @@
 #define GL_STATIC
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "Shader.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "Shader.h"
 #include "Camera.h"
 #include "Texture.h"
 #include "Cube.h"
@@ -18,7 +19,14 @@
 
 #define width_ 1260
 #define height_ 1080
-
+// =======================
+// Camera
+// =======================
+float lastX = 400, lastY = 300;
+bool firstMouse = true;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
+              glm::vec3(0.0f, 1.0f, 0.0f), 
+              0.0f, -90.0f);
 unsigned int indices[] = {
     0, 1, 2,
     2, 3, 0
@@ -26,16 +34,6 @@ unsigned int indices[] = {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {  glViewport(0, 0, width, height);  }
-
-float lastX = 400, lastY = 300;
-bool firstMouse = true;
-
-// Camera camera(glm::vec3(0.0f, 3.0f, 3.0f), 
-//               glm::vec3(0.0f, 0.0f, 0.0f), 
-//               glm::vec3(0.0f, 1.0f, 0.0f));
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
-              glm::vec3(0.0f, 1.0f, 0.0f), 
-              0.0f, -90.0f);
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -63,6 +61,86 @@ void processInput(GLFWwindow* window, float deltaTime)
         camera.ProcessKeyboard(2, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(3, deltaTime);
+}
+
+void buildScene(Scene& scene, Cube& cube)
+{
+    RenderGroup group;
+    group.mesh = &cube;
+    group.models.reserve(9);
+
+    float spacing = 2.5f;
+
+    for (int r = 0; r < 3; r++)
+    {
+        for (int c = 0; c < 3; c++)
+        {
+            glm::mat4 model(1.0f);
+            model = glm::translate(
+                model,
+                glm::vec3(
+                    (c - 1.5f) * spacing,
+                    0.0f,
+                    (1.5f - r) * spacing
+                )
+            );
+
+            group.models.push_back(model);
+        }
+    }
+
+    scene.renderGroups.push_back(group);
+    // =======================
+    // Lights
+    // =======================
+
+    // Directional Light
+    scene.lights.dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
+    scene.lights.dirLight.ambient   = glm::vec3(0.05f);
+    scene.lights.dirLight.diffuse   = glm::vec3(0.4f);
+    scene.lights.dirLight.specular  = glm::vec3(0.5f);    
+    // =======================
+    // SpotLight
+    // scene.lights.spotLight.position = camera.Position;
+    // scene.lights.spotLight.direction = glm::normalize(camera.Forward);
+    // scene.lights.spotLight.cutOff = glm::cos(glm::radians(12.5f));
+    // scene.lights.spotLight.outerCutOff = glm::cos(glm::radians(17.5f));
+    // scene.lights.spotLight.constant = 1.0f;
+    // scene.lights.spotLight.linear = 0.09f;
+    // scene.lights.spotLight.quadratic = 0.032f;
+    // scene.lights.spotLight.ambient = glm::vec3(0.05f);
+    // scene.lights.spotLight.diffuse = glm::vec3(1.0f);
+    // scene.lights.spotLight.specular = glm::vec3(1.0f);
+
+    // Point lights
+    std::vector<glm::vec3> lightPositions =
+    {
+        { 0.7f,  0.2f,  2.0f },
+        { 2.3f, -3.3f, -4.0f }
+    };
+
+    for (auto& pos : lightPositions)
+    {
+        scene.lights.pointLights.push_back({
+            pos,
+            1.0f, 0.09f, 0.032f,
+            glm::vec3(0.05f),
+            glm::vec3(0.8f),
+            glm::vec3(1.0f)
+        });
+
+        // light debug visuals (still non-instanced)
+        Object obj;
+        obj.mesh = &cube;
+
+        obj.position = pos; 
+        obj.scale = glm::vec3(0.2f); 
+
+        obj.isEmissive = true;
+        obj.emissiveColor = glm::vec3(1.0f);
+
+        scene.lightVisuals.push_back(obj);
+    }
 }
 
 #if 1
@@ -109,8 +187,10 @@ int main()
     // =======================
     // Shader / Texture
     // =======================
-    Shader shader("C:/3Dproject/shaders/basic.vert", "C:/3Dproject/shaders/basic.frag");
-    Shader lightShader("C:/3Dproject/shaders/light.vert", "C:/3Dproject/shaders/light.frag");
+    Shader shader("C:/3Dproject/shaders/basic.vert",
+                  "C:/3Dproject/shaders/basic.frag");
+    Shader lightShader("C:/3Dproject/shaders/light.vert",
+                       "C:/3Dproject/shaders/light.frag");
     Texture diffuseTex("C:/3Dproject/box.png");
     Texture specularTex("C:/3Dproject/box_specular.png");
 
@@ -119,60 +199,14 @@ int main()
     // =======================
     Scene scene;
     Renderer renderer;
-
-    Cube* cube = new Cube();
-
-    // cube positions
-    glm::vec3 cubePositions[9];
-    int idx = 0;
-    float spacing = 2.5f;
-
-    for (int r = 0; r < 3; r++)
-    {
-        for (int c = 0; c < 3; c++)
-        {
-            cubePositions[idx++] = glm::vec3(
-                (c - 1.5f) * spacing,
-                0.0f,
-                (1.5f - r) * spacing
-            );
-        }
-    }
-
+    Cube cube;
     // =======================
-    // Add objects to Scene
+    // Build Scene
     // =======================
-    for (int i = 0; i < 9; i++)
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, cubePositions[i]);
-
-        scene.objects.push_back({cube, model});
-    }
-
-    // =======================
-    // Lights
-    // =======================
-    scene.lights.dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
-    scene.lights.dirLight.ambient  = glm::vec3(0.05f);
-    scene.lights.dirLight.diffuse  = glm::vec3(0.4f);
-    scene.lights.dirLight.specular = glm::vec3(0.5f);
-
-    for (int i = 0; i < 2; i++)
-    {
-        scene.lights.pointLights.push_back({
-            cubePositions[i],
-            1.0f, 0.09f, 0.032f,
-            glm::vec3(0.05f),
-            glm::vec3(0.8f),
-            glm::vec3(1.0f)
-        });
-    }
-
+    buildScene(scene, cube);
     // =======================
     // Timing
     // =======================
-    float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
     // =======================
@@ -180,15 +214,13 @@ int main()
     // =======================
     while (!glfwWindowShouldClose(window))
     {
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        float current = glfwGetTime();
+        float dt = current - lastFrame;
+        lastFrame = current;
 
-        processInput(window, deltaTime);
+        processInput(window, dt);
+        scene.update(dt);
 
-        scene.update(deltaTime);
-
-        // bind textures（交給 renderer 前）
         shader.use();
         shader.setInt("material.diffuse", 0);
         shader.setInt("material.specular", 1);
@@ -203,7 +235,6 @@ int main()
         glfwPollEvents();
     }
 
-    delete cube;
     glfwTerminate();
     return 0;
 }

@@ -44,6 +44,13 @@ cmake_ninja_workdir = C$:/3Dproject/build/
 
 build cmake_object_order_depends_target_main: phony || .
 
+build CMakeFiles/main.dir/src/main.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/main.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\main.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src
+
 build CMakeFiles/main.dir/src/Camera.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/Camera.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\Camera.cpp.obj.d
   FLAGS = -std=gnu++17
@@ -72,15 +79,15 @@ build CMakeFiles/main.dir/src/graphics/Texture.cpp.obj: CXX_COMPILER__main_unsca
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\graphics
 
-build CMakeFiles/main.dir/src/main.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/main.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\main.cpp.obj.d
+build CMakeFiles/main.dir/src/objects/Cube.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/objects/Cube.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\objects\Cube.cpp.obj.d
   FLAGS = -std=gnu++17
   INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
   OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\objects
 
-build CMakeFiles/main.dir/src/objects/Cube.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/objects/Cube.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\objects\Cube.cpp.obj.d
+build CMakeFiles/main.dir/src/objects/Mesh.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/objects/Mesh.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\objects\Mesh.cpp.obj.d
   FLAGS = -std=gnu++17
   INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
   OBJECT_DIR = CMakeFiles\main.dir
@@ -107,7 +114,7 @@ build CMakeFiles/main.dir/C_/openGL/glad/include/glad/glad.c.obj: C_COMPILER__ma
 #############################################
 # Link the executable C:\3Dproject\bin\main.exe
 
-build C$:/3Dproject/bin/main.exe: CXX_EXECUTABLE_LINKER__main_ CMakeFiles/main.dir/src/Camera.cpp.obj CMakeFiles/main.dir/src/core/Renderer.cpp.obj CMakeFiles/main.dir/src/graphics/Shader.cpp.obj CMakeFiles/main.dir/src/graphics/Texture.cpp.obj CMakeFiles/main.dir/src/main.cpp.obj CMakeFiles/main.dir/src/objects/Cube.cpp.obj CMakeFiles/main.dir/src/scene/Scene.cpp.obj CMakeFiles/main.dir/C_/openGL/glad/include/glad/glad.c.obj
+build C$:/3Dproject/bin/main.exe: CXX_EXECUTABLE_LINKER__main_ CMakeFiles/main.dir/src/main.cpp.obj CMakeFiles/main.dir/src/Camera.cpp.obj CMakeFiles/main.dir/src/core/Renderer.cpp.obj CMakeFiles/main.dir/src/graphics/Shader.cpp.obj CMakeFiles/main.dir/src/graphics/Texture.cpp.obj CMakeFiles/main.dir/src/objects/Cube.cpp.obj CMakeFiles/main.dir/src/objects/Mesh.cpp.obj CMakeFiles/main.dir/src/scene/Scene.cpp.obj CMakeFiles/main.dir/C_/openGL/glad/include/glad/glad.c.obj
   LINK_LIBRARIES = -lglfw3  -lopengl32  -lgdi32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   LINK_PATH = -LC:/openGL/glfw-3.4.bin.WIN64/lib-mingw-w64
   OBJECT_DIR = CMakeFiles\main.dir

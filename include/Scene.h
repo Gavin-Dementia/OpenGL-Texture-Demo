@@ -3,6 +3,10 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 #include "Mesh.h"
 
 // =======================
@@ -13,6 +17,9 @@ struct DirLight {
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
+
+    float intensity = 1.0f;
+    bool enabled = true;
 };
 
 struct PointLight {
@@ -25,6 +32,9 @@ struct PointLight {
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
+
+    float intensity = 1.0f;
+    bool enabled = true;
 };
 
 struct SpotLight {
@@ -41,6 +51,9 @@ struct SpotLight {
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
+
+    float intensity = 1.0f;
+    bool enabled = true;
 };
 
 // =======================
@@ -54,33 +67,62 @@ struct LightManager
 };
 
 // =======================
-// Object struct
+// Object（for debug / light visual）
 // =======================
 struct Object
 {
-    Mesh* mesh;
-    glm::mat4 model;
+    Mesh* mesh = nullptr;
+
+    glm::vec3 position{0.0f};
+    glm::vec3 scale{1.0f};
+
+    bool isEmissive = false;
+    glm::vec3 emissiveColor{0.0f};
+
+    glm::mat4 getModel() const
+    {
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, position);
+        model = glm::scale(model, scale);
+        return model;
+    }
+
+};
+
+
+// =======================
+// RenderGroup (GPU batch核心)
+// =======================
+struct RenderGroup
+{
+    Mesh* mesh = nullptr;
+    std::vector<glm::mat4> models;
+
+    bool isEmissive = false;
+    glm::vec3 emissiveColor = glm::vec3(0.0f);
+
+    void* material = nullptr;
+    bool instanceDirty = true;
+
+    void setModels(const std::vector<glm::mat4>& m)
+    {
+        models = m;
+        instanceDirty = true;
+    }
 };
 
 // =======================
 // Scene
 // =======================
-class Scene
-{
+class Scene {
 public:
-    std::vector<Object> objects;
+    std::vector<RenderGroup> renderGroups;
+    std::vector<Object> lightVisuals;
+
     LightManager lights;
 
-    Scene() = default;
-
-    DirLight dirLight;
-    std::vector<PointLight> pointLights;
-    SpotLight spotLight;
-
-    // debug lights (visualization)
-    std::vector<Object> lightObjects;
-
-    void update(float deltaTime);
+    void update(float dt);
 };
 
 #endif
+

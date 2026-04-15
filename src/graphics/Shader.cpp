@@ -118,8 +118,8 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
         {
             glGetShaderInfoLog(shader, 1024, NULL, infoLog);
             std::cout << "ERROR: " << infoLog << std::endl;
+            throw std::runtime_error("Shader compile failed");
         }
-        else return;
     }
     else
     {
@@ -128,8 +128,8 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
         {
             glGetProgramInfoLog(ID, 1024, NULL, infoLog);
             std::cout << ID << "ERROR: " << infoLog << std::endl;
+            throw std::runtime_error("Shader program link failed");
         }
-        else return;
     }
 }
 

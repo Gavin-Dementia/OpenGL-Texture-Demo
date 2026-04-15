@@ -10,17 +10,18 @@ class Renderer
 {
 public:
     void render(Scene& scene,
-            Shader& shader,
-            Shader& lightShader,
-            Camera& camera,
-            float width_, float height_);
+                Shader& shader,
+                Shader& lightShader,
+                Camera& camera,
+                float width_, float height_);
 
 private:
     void uploadCamera(Shader& shader, Camera& camera, float width, float height);
     void uploadLights(Shader& shader, Scene& scene);
     void drawObjects(Scene& scene, Shader& shader);
-    void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera);
+    void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera,
+                          float width, float height);
 };
 
-#endif // RENDERER_H
+#endif
 
