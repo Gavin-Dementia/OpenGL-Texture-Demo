@@ -4,6 +4,9 @@ void Mesh::setInstances(const std::vector<glm::mat4>& models)
 {
     glBindVertexArray(VAO); // ⭐ critical
 
+    if (instanceVBO == 0)
+        setupInstanceBuffer();
+
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
 
     glBufferData(GL_ARRAY_BUFFER,

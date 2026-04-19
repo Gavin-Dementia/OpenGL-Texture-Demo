@@ -25,6 +25,8 @@ private:
 private:
     GLuint uboDirLight = 0;
     GLuint uboCamera = 0;
+    GLuint uboPointLights = 0;
+    GLuint uboSpotLight = 0;
 };
 
 #endif

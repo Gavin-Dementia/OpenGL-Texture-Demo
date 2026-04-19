@@ -98,24 +98,32 @@ void buildScene(Scene& scene, Cube& cube)
     scene.lights.dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
     scene.lights.dirLight.ambient   = glm::vec3(0.05f);
     scene.lights.dirLight.diffuse   = glm::vec3(0.4f);
-    scene.lights.dirLight.specular  = glm::vec3(0.5f);    
+    scene.lights.dirLight.specular  = glm::vec3(0.5f);
     // populate GPU cache (std140 vec4 fields)
     scene.lights.dirLightGPU.direction = glm::vec4(scene.lights.dirLight.direction, 0.0f);
     scene.lights.dirLightGPU.ambient   = glm::vec4(scene.lights.dirLight.ambient, 0.0f);
     scene.lights.dirLightGPU.diffuse   = glm::vec4(scene.lights.dirLight.diffuse, 0.0f);
     scene.lights.dirLightGPU.specular  = glm::vec4(scene.lights.dirLight.specular, 0.0f);
+    std::cout << "[buildScene] dirLight set to: "
+              << scene.lights.dirLight.direction.x << ", "
+              << scene.lights.dirLight.direction.y << ", "
+              << scene.lights.dirLight.direction.z << std::endl;
     // =======================
-    // SpotLight
-    // scene.lights.spotLight.position = camera.Position;
-    // scene.lights.spotLight.direction = glm::normalize(camera.Forward);
-    // scene.lights.spotLight.cutOff = glm::cos(glm::radians(12.5f));
-    // scene.lights.spotLight.outerCutOff = glm::cos(glm::radians(17.5f));
-    // scene.lights.spotLight.constant = 1.0f;
-    // scene.lights.spotLight.linear = 0.09f;
-    // scene.lights.spotLight.quadratic = 0.032f;
-    // scene.lights.spotLight.ambient = glm::vec3(0.05f);
-    // scene.lights.spotLight.diffuse = glm::vec3(1.0f);
-    // scene.lights.spotLight.specular = glm::vec3(1.0f);
+    // SpotLight (initial values)
+    scene.lights.spotLight.position = camera.Position;
+    scene.lights.spotLight.direction = glm::normalize(camera.Forward);
+    scene.lights.spotLight.cutOff = glm::cos(glm::radians(12.5f));
+    scene.lights.spotLight.outerCutOff = glm::cos(glm::radians(17.5f));
+    scene.lights.spotLight.constant = 1.0f;
+    scene.lights.spotLight.linear = 0.09f;
+    scene.lights.spotLight.quadratic = 0.032f;
+    scene.lights.spotLight.ambient = glm::vec3(0.05f);
+    scene.lights.spotLight.diffuse = glm::vec3(1.0f);
+    scene.lights.spotLight.specular = glm::vec3(1.0f);
+    std::cout << "[buildScene] spotLight pos: "
+              << scene.lights.spotLight.position.x << ", "
+              << scene.lights.spotLight.position.y << ", "
+              << scene.lights.spotLight.position.z << std::endl;
 
     // Point lights
     std::vector<glm::vec3> lightPositions =
@@ -203,11 +211,19 @@ int main()
         if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 0);
         idx = glGetUniformBlockIndex(shader.ID, "DirLightBlock");
         if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 1);
+        idx = glGetUniformBlockIndex(shader.ID, "PointLightsBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 2);
+        idx = glGetUniformBlockIndex(shader.ID, "SpotLightBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 3);
 
         idx = glGetUniformBlockIndex(lightShader.ID, "Camera");
         if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 0);
         idx = glGetUniformBlockIndex(lightShader.ID, "DirLightBlock");
         if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 1);
+        idx = glGetUniformBlockIndex(lightShader.ID, "PointLightsBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 2);
+        idx = glGetUniformBlockIndex(lightShader.ID, "SpotLightBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 3);
     }
     Texture diffuseTex("C:/3Dproject/box.png");
     Texture specularTex("C:/3Dproject/box_specular.png");
@@ -222,6 +238,8 @@ int main()
     // Build Scene
     // =======================
     buildScene(scene, cube);
+    // Initialize renderer (create UBOs, bind ranges)
+    renderer.init();
     // =======================
     // Timing
     // =======================
@@ -237,7 +255,7 @@ int main()
         lastFrame = current;
 
         processInput(window, dt);
-        scene.update(dt);
+        scene.update(dt);//anime
 
         shader.use();
         shader.setInt("material.diffuse", 0);

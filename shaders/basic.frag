@@ -37,22 +37,45 @@ struct Material {
 uniform Material material;
 
 // =======================
-// Point Light（先不進 UBO）
+// =======================
+// Point Lights -> UBO
 // =======================
 #define NR_POINT_LIGHTS 16
 
-struct PointLight {
-    vec3 position;
-    float constant;
-    float linear;
-    float quadratic;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+struct PointLightGPU {
+    vec4 position;    // xyz
+
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+
+    vec4 params;      // x=constant, y=linear, z=quadratic, w=intensity
+};
+
+layout(std140) uniform PointLightsBlock {
+    PointLightGPU pointLights[NR_POINT_LIGHTS];
 };
 
 uniform int numPointLights;
-uniform PointLight pointLights[NR_POINT_LIGHTS];
+
+// =======================
+// SpotLight -> UBO
+// =======================
+struct SpotLightGPU {
+    vec4 position;
+    vec4 direction;
+
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+
+    vec4 params1; // x=cutOff y=outerCutOff z=constant w=linear
+    vec4 params2; // x=quadratic y=intensity
+};
+
+layout(std140) uniform SpotLightBlock {
+    SpotLightGPU spotLight;
+};
 
 // =======================
 // Emissive
@@ -79,25 +102,28 @@ vec3 CalcDirLight(vec3 normal, vec3 viewDir, vec3 diffuseTex, vec3 specTex)
     return ambientC + diffuseC + specularC;
 }
 
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseTex, vec3 specTex)
+vec3 CalcPointLight(PointLightGPU light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseTex, vec3 specTex)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 lightDir = normalize(light.position.xyz - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
 
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
-    float distance = length(light.position - fragPos);
+    float distance = length(light.position.xyz - fragPos);
+    float constant = light.params.x;
+    float linear = light.params.y;
+    float quadratic = light.params.z;
     float attenuation = 1.0 / (
-        light.constant +
-        light.linear * distance +
-        light.quadratic * distance * distance
+        constant +
+        linear * distance +
+        quadratic * distance * distance
     );
 
-    vec3 ambientC = light.ambient * diffuseTex;
-    vec3 diffuseC = light.diffuse * diff * diffuseTex;
-    vec3 specularC = light.specular * spec * specTex;
+    vec3 ambientC = light.ambient.xyz * diffuseTex;
+    vec3 diffuseC = light.diffuse.xyz * diff * diffuseTex;
+    vec3 specularC = light.specular.xyz * spec * specTex;
 
     ambientC *= attenuation;
     diffuseC *= attenuation;

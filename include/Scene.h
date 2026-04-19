@@ -111,6 +111,7 @@ struct LightManager
     // ========= GPU cache =========
     DirLightGPU dirLightGPU;
     std::vector<PointLightGPU> pointLightsGPU;
+    SpotLightGPU spotLightGPU;
 };
 
 // =======================

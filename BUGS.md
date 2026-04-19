@@ -31,3 +31,31 @@
 - Add unit/visual smoke test or a small startup scene that validates instanced rendering and light markers automatically.
 
 **Status**: fixes applied to `src/objects/Cube.cpp` and `src/core/Renderer.cpp`.
+
+## 19/04/2026
+
+- **Directional / Point / Spot lights migrated to UBOs (std140)**
+  - **Symptom**: initially screen was black with no visible lighting.
+  - **Cause**: Camera/DirLight/PointLight/SpotLight data were uploaded as individual uniforms or not uploaded into GPU-friendly std140 layout; `dirLightGPU` and other GPU caches were not filled prior to UBO upload; `Renderer::init()` was not called before rendering.
+  - **Fixes applied**:
+    - Added `Camera` UBO (binding 0) and `DirLight` UBO (binding 1) and moved camera/view/proj/viewPos into the camera UBO.
+    - Replaced point lights and spot light uniforms with `PointLightsBlock` (binding 2) and `SpotLightBlock` (binding 3) using std140 GPU structs (`PointLightGPU`, `SpotLightGPU`).
+    - Populated GPU-side cache structs (`dirLightGPU`, `pointLightsGPU`, `spotLightGPU`) from CPU `LightManager` and uploaded them with `glBufferSubData`.
+    - Ensure `renderer.init()` is called in `main` to create and bind UBO ranges before rendering.
+    - Added defensive shader block binding in `main.cpp` (using `glUniformBlockBinding`) to map blocks to binding points at runtime.
+    - Added lightweight runtime debug printouts and UBO readback to verify uploaded contents.
+  - **Files**: `include/Scene.h`, `include/Renderer.h`, `src/core/Renderer.cpp`, `src/main.cpp`, `shaders/basic.frag`, `shaders/light.vert`.
+  - **Status**: verified locally — executable launches and textures load; UBO readback shows non-zero light data.
+
+  - **Light visuals not following point lights (fixed)**
+    - **Symptom**: white emissive debug cubes (lightVisuals) remained static while point light positions animated, causing visual mismatch between light source and its marker.
+    - **Cause**: `Scene::update()` updated `lights.pointLights` but did not propagate positions to `scene.lightVisuals` (the debug `Object` instances used for rendering light markers).
+    - **Fix**: synchronize visual objects with light positions inside `Scene::update()`; also changed point-light animation to use an accumulated time value rather than per-frame `deltaTime` so motion is smooth and not near-zero. (See `src/scene/Scene.cpp`)
+    - **Files**: [src/scene/Scene.cpp](src/scene/Scene.cpp)
+
+  **Status**: patched and verified — visual markers now move with their corresponding point lights.
+
+**Recommended follow-ups**:
+- Add guard in `Mesh::setInstances()` to ensure instance VBO is created before use (see earlier note).
+- Improve shader compile error logging in `Shader` to print full infoLog and shader file path on failure.
+- Add an automated startup smoke test that asserts non-black framebuffer after a first frame render (helps catch regressions).
