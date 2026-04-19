@@ -112,6 +112,10 @@ struct LightManager
     DirLightGPU dirLightGPU;
     std::vector<PointLightGPU> pointLightsGPU;
     SpotLightGPU spotLightGPU;
+    // dirty flags for incremental updates
+    bool dirDirty = false;
+    bool spotDirty = false;
+    std::vector<char> pointLightDirty; // 0/1 per point light
 };
 
 // =======================

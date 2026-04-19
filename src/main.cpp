@@ -154,6 +154,11 @@ void buildScene(Scene& scene, Cube& cube)
 
         scene.lightVisuals.push_back(obj);
     }
+
+    // mark lights dirty so first upload initializes UBOs
+    scene.lights.dirDirty = true;
+    scene.lights.spotDirty = true;
+    scene.lights.pointLightDirty.resize(scene.lights.pointLights.size(), 1);
 }
 
 #if 1
@@ -255,7 +260,7 @@ int main()
         lastFrame = current;
 
         processInput(window, dt);
-        scene.update(dt);//anime
+        // scene.update(dt);//anime
 
         shader.use();
         shader.setInt("material.diffuse", 0);

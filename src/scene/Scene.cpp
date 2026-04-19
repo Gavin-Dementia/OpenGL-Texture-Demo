@@ -19,5 +19,10 @@ void Scene::update(float deltaTime)
     {
         lightVisuals[i].position = lights.pointLights[i].position;
     }
+
+    // mark point lights dirty for incremental UBO update
+    lights.pointLightDirty.resize(lights.pointLights.size());
+    for (size_t i = 0; i < lights.pointLights.size(); ++i)
+        lights.pointLightDirty[i] = 1;
 }
 

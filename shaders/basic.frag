@@ -56,8 +56,6 @@ layout(std140) uniform PointLightsBlock {
     PointLightGPU pointLights[NR_POINT_LIGHTS];
 };
 
-uniform int numPointLights;
-
 // =======================
 // SpotLight -> UBO
 // =======================
@@ -144,9 +142,12 @@ void main()
 
     result += CalcDirLight(norm, viewDir, diffuseTex, specTex);
 
-    for(int i = 0; i < numPointLights; i++)
+    for(int i = 0; i < NR_POINT_LIGHTS; i++)
+    {
+        if(pointLights[i].params.w <= 0.0) continue; // intensity == 0 → skip
         result += CalcPointLight(pointLights[i], norm, FragPos, viewDir, diffuseTex, specTex);
-
+    }
+    
     if (isEmissive)
         result += emissiveColor;
 

@@ -19,6 +19,7 @@ public:
 private:
     void uploadCamera(Shader& shader, Camera& camera, float width, float height);
     void uploadLights(Shader& shader, Scene& scene);
+    void uploadLights(Scene& scene);
     void drawObjects(Scene& scene, Shader& shader);
     void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera,
                           float width, float height);
