@@ -1,5 +1,7 @@
 **Bug Log**
 
+# 15/04/2026
+
 - **Instance Attributes Missing**: instance matrices for instanced draws were never initialized, causing per-instance transforms to be incorrect or effectively zeroed.
   - **Symptom**: black screen / instanced objects invisible or collapsed to origin.
   - **Cause**: per-instance vertex attributes (locations 3..6) and `instanceVBO` were not set up before uploading instance data.

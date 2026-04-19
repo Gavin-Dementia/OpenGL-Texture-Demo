@@ -99,6 +99,11 @@ void buildScene(Scene& scene, Cube& cube)
     scene.lights.dirLight.ambient   = glm::vec3(0.05f);
     scene.lights.dirLight.diffuse   = glm::vec3(0.4f);
     scene.lights.dirLight.specular  = glm::vec3(0.5f);    
+    // populate GPU cache (std140 vec4 fields)
+    scene.lights.dirLightGPU.direction = glm::vec4(scene.lights.dirLight.direction, 0.0f);
+    scene.lights.dirLightGPU.ambient   = glm::vec4(scene.lights.dirLight.ambient, 0.0f);
+    scene.lights.dirLightGPU.diffuse   = glm::vec4(scene.lights.dirLight.diffuse, 0.0f);
+    scene.lights.dirLightGPU.specular  = glm::vec4(scene.lights.dirLight.specular, 0.0f);
     // =======================
     // SpotLight
     // scene.lights.spotLight.position = camera.Position;
@@ -191,6 +196,19 @@ int main()
                   "C:/3Dproject/shaders/basic.frag");
     Shader lightShader("C:/3Dproject/shaders/light.vert",
                        "C:/3Dproject/shaders/light.frag");
+    // Bind uniform blocks to binding points (std140 UBOs)
+    // Camera -> binding 0, DirLightBlock -> binding 1
+    {
+        GLint idx = glGetUniformBlockIndex(shader.ID, "Camera");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 0);
+        idx = glGetUniformBlockIndex(shader.ID, "DirLightBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 1);
+
+        idx = glGetUniformBlockIndex(lightShader.ID, "Camera");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 0);
+        idx = glGetUniformBlockIndex(lightShader.ID, "DirLightBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 1);
+    }
     Texture diffuseTex("C:/3Dproject/box.png");
     Texture specularTex("C:/3Dproject/box_specular.png");
 

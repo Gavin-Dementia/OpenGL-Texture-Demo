@@ -9,6 +9,7 @@
 class Renderer
 {
 public:
+    void init();
     void render(Scene& scene,
                 Shader& shader,
                 Shader& lightShader,
@@ -21,6 +22,9 @@ private:
     void drawObjects(Scene& scene, Shader& shader);
     void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera,
                           float width, float height);
+private:
+    GLuint uboDirLight = 0;
+    GLuint uboCamera = 0;
 };
 
 #endif

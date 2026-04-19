@@ -22,6 +22,14 @@ struct DirLight {
     bool enabled = true;
 };
 
+struct DirLightGPU
+{
+    glm::vec4 direction;   // xyz + pad
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+};
+
 struct PointLight {
     glm::vec3 position;
 
@@ -35,6 +43,21 @@ struct PointLight {
 
     float intensity = 1.0f;
     bool enabled = true;
+};
+
+struct PointLightGPU
+{
+    glm::vec4 position;    // xyz
+
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+
+    glm::vec4 params;      
+    // x = constant
+    // y = linear
+    // z = quadratic
+    // w = intensity
 };
 
 struct SpotLight {
@@ -56,6 +79,26 @@ struct SpotLight {
     bool enabled = true;
 };
 
+struct SpotLightGPU
+{
+    glm::vec4 position;
+    glm::vec4 direction;
+
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+
+    glm::vec4 params1; 
+    // x = cutOff
+    // y = outerCutOff
+    // z = constant
+    // w = linear
+
+    glm::vec4 params2;
+    // x = quadratic
+    // y = intensity
+};
+
 // =======================
 // Light Manager
 // =======================
@@ -64,6 +107,10 @@ struct LightManager
     DirLight dirLight;
     std::vector<PointLight> pointLights;
     SpotLight spotLight;
+
+    // ========= GPU cache =========
+    DirLightGPU dirLightGPU;
+    std::vector<PointLightGPU> pointLightsGPU;
 };
 
 // =======================
