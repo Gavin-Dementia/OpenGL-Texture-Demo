@@ -5,6 +5,7 @@ out vec4 FragColor;
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
+in vec4 FragPosLightSpace;
 
 // =======================
 // UBO: Camera
@@ -35,6 +36,7 @@ struct Material {
 };
 
 uniform Material material;
+uniform sampler2D shadowMap;
 
 // =======================
 // =======================
@@ -96,6 +98,24 @@ vec3 CalcDirLight(vec3 normal, vec3 viewDir, vec3 diffuseTex, vec3 specTex)
     vec3 ambientC = ambient.xyz * diffuseTex;
     vec3 diffuseC = diffuse.xyz * diff * diffuseTex;
     vec3 specularC = specular.xyz * spec * specTex;
+
+    // shadow calculation
+    float shadow = 0.0;
+    {
+        vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
+        projCoords = projCoords * 0.5 + 0.5;
+        if (projCoords.x >= 0.0 && projCoords.x <= 1.0 && projCoords.y >= 0.0 && projCoords.y <= 1.0)
+        {
+            float closestDepth = texture(shadowMap, projCoords.xy).r;
+            float currentDepth = projCoords.z;
+            float bias = max(0.0005, 0.005 * (1.0 - max(dot(normal, lightDir), 0.0)));
+            if (currentDepth - bias > closestDepth)
+                shadow = 1.0;
+        }
+    }
+
+    diffuseC *= (1.0 - shadow);
+    specularC *= (1.0 - shadow);
 
     return ambientC + diffuseC + specularC;
 }

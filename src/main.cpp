@@ -209,6 +209,8 @@ int main()
                   "C:/3Dproject/shaders/basic.frag");
     Shader lightShader("C:/3Dproject/shaders/light.vert",
                        "C:/3Dproject/shaders/light.frag");
+    Shader depthShader("C:/3Dproject/shaders/depth.vert",
+                       "C:/3Dproject/shaders/depth.frag");
     // Bind uniform blocks to binding points (std140 UBOs)
     // Camera -> binding 0, DirLightBlock -> binding 1
     {
@@ -270,7 +272,7 @@ int main()
         diffuseTex.bind(0);
         specularTex.bind(1);
 
-        renderer.render(scene, shader, lightShader, camera, width_, height_);
+        renderer.render(scene, shader, lightShader, depthShader, camera, width_, height_);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

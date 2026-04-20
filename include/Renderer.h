@@ -13,6 +13,7 @@ public:
     void render(Scene& scene,
                 Shader& shader,
                 Shader& lightShader,
+                Shader& depthShader,
                 Camera& camera,
                 float width_, float height_);
 
@@ -28,6 +29,11 @@ private:
     GLuint uboCamera = 0;
     GLuint uboPointLights = 0;
     GLuint uboSpotLight = 0;
+    // Shadow map resources
+    GLuint depthMapFBO = 0;
+    GLuint depthMap = 0;
+    const unsigned int SHADOW_WIDTH = 1024;
+    const unsigned int SHADOW_HEIGHT = 1024;
 };
 
 #endif

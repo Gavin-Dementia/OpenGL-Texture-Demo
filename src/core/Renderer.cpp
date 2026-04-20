@@ -34,21 +34,70 @@ void Renderer::init()
     glBufferData(GL_UNIFORM_BUFFER, sizeof(SpotLightGPU), nullptr, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, 3, uboSpotLight, 0, sizeof(SpotLightGPU));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    // Shadow map FBO + depth texture
+    glGenFramebuffers(1, &depthMapFBO);
+
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::render(Scene& scene, Shader& shader,
-                      Shader& lightShader, Camera& camera,
+                      Shader& lightShader, Shader& depthShader,
+                      Camera& camera,
                       float width_, float height_)
 {
     glEnable(GL_DEPTH_TEST);
 
+    // 1. Render scene to depth map (from directional light POV)
+    // compute light-space matrix for directional light
+    glm::vec3 lightDir = glm::normalize(scene.lights.dirLight.direction);
+    float near_plane = 1.0f, far_plane = 50.0f;
+    float orthoSize = 15.0f;
+    glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
+    glm::vec3 lightPos = -lightDir * 20.0f;
+    glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    depthShader.use();
+    depthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    // render depth-only pass
+    drawObjects(scene, depthShader);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // 2. Render scene normally
+    glViewport(0, 0, (int)width_, (int)height_);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     uploadCamera(shader, camera, width_, height_);
-
-    //uploadLights(shader, scene);
     uploadLights(scene);
+
+    // bind depth map to texture unit 2
+    shader.use();
+    shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    shader.setInt("shadowMap", 2);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
 
     drawObjects(scene, shader);
     drawLightObjects(scene, lightShader, camera, width_, height_);
