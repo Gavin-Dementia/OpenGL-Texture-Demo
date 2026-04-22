@@ -18,7 +18,7 @@ set(SRC_FILES
 
     src/scene/Scene.cpp
 
-    C:/openGL/glad/include/glad/glad.c
+    C:/openGL/glad/src/glad.c
 )
 
 include_directories(

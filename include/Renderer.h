@@ -17,6 +17,17 @@ public:
                 Camera& camera,
                 float width_, float height_);
 
+    // Public helpers used by render passes
+    void executeDrawObjects(Scene& scene, Shader& shader) { drawObjects(scene, shader); }
+    GLuint getDepthMapFBO() const { return depthMapFBO; }
+    GLuint getDepthMap() const { return depthMap; }
+    unsigned int getShadowWidth() const { return SHADOW_WIDTH; }
+    unsigned int getShadowHeight() const { return SHADOW_HEIGHT; }
+
+    // wrappers for private upload functions so passes can call them
+    void uploadCameraPublic(Shader& shader, Camera& camera, float width, float height) { uploadCamera(shader, camera, width, height); }
+    void uploadLightsPublic(Scene& scene) { uploadLights(scene); }
+
 private:
     void uploadCamera(Shader& shader, Camera& camera, float width, float height);
     void uploadLights(Shader& shader, Scene& scene);
@@ -24,6 +35,14 @@ private:
     void drawObjects(Scene& scene, Shader& shader);
     void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera,
                           float width, float height);
+public:
+    struct RenderItem {
+        Mesh* mesh = nullptr;
+        Material* material = nullptr;
+        glm::mat4 model = glm::mat4(1.0f);
+        bool isEmissive = false;
+        glm::vec3 emissiveColor = glm::vec3(0.0f);
+    };
 private:
     GLuint uboDirLight = 0;
     GLuint uboCamera = 0;

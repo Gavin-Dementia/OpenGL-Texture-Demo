@@ -8,6 +8,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "Mesh.h"
+#include "Material.h"
 
 // =======================
 // Light structs
@@ -153,7 +154,7 @@ struct RenderGroup
     bool isEmissive = false;
     glm::vec3 emissiveColor = glm::vec3(0.0f);
 
-    void* material = nullptr;
+    Material* material = nullptr;
     bool instanceDirty = true;
 
     void setModels(const std::vector<glm::mat4>& m)

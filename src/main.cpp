@@ -12,6 +12,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "Material.h"
 #include "Cube.h"
 #include "Scene.h"
 #include "Renderer.h"
@@ -245,6 +246,10 @@ int main()
     // Build Scene
     // =======================
     buildScene(scene, cube);
+    // assign a default material to the first render group (example)
+    Material* defaultMat = new Material(&diffuseTex, &specularTex, 128.0f);
+    if (!scene.renderGroups.empty())
+        scene.renderGroups[0].material = defaultMat;
     // Initialize renderer (create UBOs, bind ranges)
     renderer.init();
     // =======================

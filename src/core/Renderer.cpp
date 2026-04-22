@@ -1,4 +1,7 @@
 #include "Renderer.h"
+#include "Material.h"
+#include <algorithm>
+#include <cstdint>
 
 void Renderer::init()
 {
@@ -284,23 +287,69 @@ void Renderer::drawObjects(Scene& scene, Shader& shader)
 {
     shader.use();
 
+    // Build render queue: one RenderItem per model instance
+    std::vector<RenderItem> queue;
     for (auto& group : scene.renderGroups)
     {
-        if (group.models.empty())
-            continue;
+        if (group.models.empty()) continue;
 
-        // upload instance buffer only when dirty
-        if (group.instanceDirty)
+        for (const auto& m : group.models)
         {
-            group.mesh->setInstances(group.models);
-            group.instanceDirty = false;
+            RenderItem it;
+            it.mesh = group.mesh;
+            it.material = group.material;
+            it.model = m;
+            it.isEmissive = group.isEmissive;
+            it.emissiveColor = group.emissiveColor;
+            queue.push_back(it);
+        }
+    }
+
+    if (queue.empty()) return;
+
+    // Sort by material pointer then mesh pointer to minimize state changes
+    std::sort(queue.begin(), queue.end(), [](const RenderItem& a, const RenderItem& b){
+        if (a.material != b.material) return a.material < b.material;
+        if (a.mesh != b.mesh) return a.mesh < b.mesh;
+        return false;
+    });
+
+    // Batch contiguous items with same material+mesh using instancing
+    RenderItem const* prev = &queue[0];
+    std::vector<glm::mat4> batchModels;
+    batchModels.reserve(64);
+
+    auto flushBatch = [&](RenderItem const* key){
+        if (batchModels.empty()) return;
+        // bind material/state
+        if (key->material)
+            key->material->bind(shader);
+        shader.setBool("isEmissive", key->isEmissive);
+        shader.setVec3("emissiveColor", key->emissiveColor);
+        // upload instances and draw
+        key->mesh->setInstances(batchModels);
+        key->mesh->drawInstanced((int)batchModels.size());
+        batchModels.clear();
+    };
+
+    for (size_t i = 0; i < queue.size(); ++i)
+    {
+        RenderItem const* cur = &queue[i];
+        bool sameMaterial = (cur->material == prev->material);
+        bool sameMesh = (cur->mesh == prev->mesh);
+
+        if (!sameMaterial || !sameMesh)
+        {
+            // flush previous batch
+            flushBatch(prev);
+            prev = cur;
         }
 
-        shader.setBool("isEmissive", group.isEmissive);
-        shader.setVec3("emissiveColor", group.emissiveColor);
-
-        group.mesh->drawInstanced((int)group.models.size());
+        batchModels.push_back(cur->model);
     }
+
+    // flush remaining
+    flushBatch(prev);
 }
 
 void Renderer::drawLightObjects(Scene& scene,

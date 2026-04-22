@@ -1,4 +1,4 @@
-**Bug Log**
+**Bugs Log**
 
 # 15/04/2026
 
@@ -32,7 +32,7 @@
 
 **Status**: fixes applied to `src/objects/Cube.cpp` and `src/core/Renderer.cpp`.
 
-## 19/04/2026
+# 19/04/2026
 
 - **Directional / Point / Spot lights migrated to UBOs (std140)**
   - **Symptom**: initially screen was black with no visible lighting.
@@ -59,3 +59,74 @@
 - Add guard in `Mesh::setInstances()` to ensure instance VBO is created before use (see earlier note).
 - Improve shader compile error logging in `Shader` to print full infoLog and shader file path on failure.
 - Add an automated startup smoke test that asserts non-black framebuffer after a first frame render (helps catch regressions).
+
+
+
+# 22/04/2026
+## Technical Retrospective: GPU-Driven Pipeline Integration Failure
+
+---
+
+### Executive Summary
+
+An attempt to implement a high-performance GPU-driven rendering pipeline (comprising compute-based frustum culling and multi-draw indirect commands) resulted in critical system instability. Deployment was halted due to fundamental architectural mismatches and API-level incompatibilities.
+
+---
+
+### Root Cause Analysis (RCA)
+
+#### 1. GLSL Versioning and Extension Constraints
+- **Incident**: Compute shader compilation failure.
+- **Root Cause**: The implementation targeted GLSL features (Version 4.20+) not explicitly supported by the current OpenGL context. Furthermore, `GL_ARB_compute_shader` was not correctly requested in the initialization phase.
+
+#### 2. Type Specification Violations
+- **Incident**: Precision errors reported during shader linking.
+- **Root Cause**: Implicit usage of `double` precision types, which are unsupported in the standard Core Profile without specific hardware extensions.
+
+#### 3. Shader Abstraction Limitations
+- **Incident**: Inability to dispatch compute kernels.
+- **Root Cause**: The existing `Shader` class was architected exclusively for Vertex and Fragment stages. It lacked the necessary logic for compute program creation, work-group dispatch, and memory barrier synchronization.
+
+#### 4. SSBO Memory Alignment and Binding Discrepancies
+- **Incident**: Illegal memory access or zero-data rendering.
+- **Root Cause**: Inconsistent binding points between the host (C++) and device (GLSL). Critical handles such as `RENDER_QUEUE_SSBO_BINDING` were improperly scoped, leading to unaligned data mapping.
+
+#### 5. Command Buffer Layout Mismatch
+- **Incident**: Failed execution of Indirect Draw calls.
+- **Root Cause**: Discrepancies between the CPU `DrawIndirectCommand` struct and the GPU-side layout (std430 alignment rules), resulting in corrupted command arguments.
+
+#### 6. Core Architectural Instability
+- **Incident**: Cascading compilation and runtime errors.
+- **Root Cause**: Attempted to integrate advanced GPU-driven features onto a non-stabilized renderer base, creating circular dependencies between the Scene Graph and the GPU Pipeline.
+
+---
+
+### Strategic Takeaways
+
+1.  **Architecture Prioritization**: Advanced GPU features require a robust, decoupled modular architecture. Logic cannot be "injected" into a monolithic renderer without prior refactoring.
+2.  **API Strictness**: Absolute consistency across OpenGL versions, GLSL declarations, and GLAD capabilities is mandatory for compute operations.
+3.  **Memory Layout Precision**: SSBO and Indirect Buffer implementations require 100% bit-accurate alignment between Host and Device structures.
+
+---
+
+### Remediation Action Plan
+
+To mitigate further instability, the project has been rolled back to the last known stable state.
+**Current Status**: Reverting to `main` branch; the `gpu-experiment-broken` branch has been archived for reference.
+
+---
+
+### Engineering Roadmap (Phase 2 Refactor)
+
+The GPU pipeline will be reintroduced incrementally following these milestones:
+
+1.  **Finalize RenderPass Abstraction**: Stabilize the multi-pass system (Depth, Forward, Post). ✅
+2.  **Refactor Render Queue**: Implement a clean, sortable CPU-side queue as a foundation.
+3.  **SSBO Integration**: Develop a dedicated interface for GPU buffer management and alignment verification.
+4.  **Compute Integration**: Extend the `Shader` class to support compute-specific lifecycle management.
+5.  **Indirect Execution**: Implement verified Indirect Draw commands with proper memory barriers.
+
+---
+
+### Final Assessment
+While the implementation failed to meet the deployment criteria, the diagnostic process successfully identified systemic architectural weaknesses that must be addressed to support a production-grade GPU-driven renderer.

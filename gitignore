@@ -1,6 +1,10 @@
-# Build
+# =========================
+# Build artifacts
+# =========================
 build/
 bin/
+out/
+dist/
 
 # CMake
 CMakeCache.txt
@@ -9,14 +13,64 @@ cmake_install.cmake
 build.ninja
 .ninja_deps
 .ninja_log
+compile_commands.json
 
-# VSCode
-.vscode/
+# =========================
+# Compiler / Object files
+# =========================
+*.o
+*.obj
+*.lo
+*.slo
+*.pch
+*.gch
 
-# Windows
+# =========================
+# Executables / Libraries
+# =========================
 *.exe
 *.dll
+*.so
+*.dylib
+*.a
+*.lib
 
-# Temp
-*.obj
-*.o
+# =========================
+# Debug / Logs
+# =========================
+*.log
+crash_log.txt
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.vcxproj*
+*.sln
+*.user
+*.filters
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Assets cache (optional)
+# =========================
+*.tmp
+*.cache
+
+# =========================
+# Generated shader binaries
+# =========================
+*.spv
+
+# =========================
+# External dependencies
+# =========================
+external/
+third_party/
+
