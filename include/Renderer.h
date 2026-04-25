@@ -30,11 +30,11 @@ public:
 
 private:
     void uploadCamera(Shader& shader, Camera& camera, float width, float height);
-    void uploadLights(Shader& shader, Scene& scene);
     void uploadLights(Scene& scene);
     void drawObjects(Scene& scene, Shader& shader);
     void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera,
                           float width, float height);
+    void drawObjectsGPU(Scene& scene, Shader& shader);
 public:
     struct RenderItem {
         Mesh* mesh = nullptr;
@@ -43,6 +43,20 @@ public:
         bool isEmissive = false;
         glm::vec3 emissiveColor = glm::vec3(0.0f);
     };
+
+    struct GpuRenderItem 
+    {
+        glm::mat4 model;
+        uint32_t meshID;
+        uint32_t materialID;
+        uint32_t emissive;
+        uint32_t pad; // std430 alignment
+        glm::vec4 emissiveColor;
+    };
+private:
+    GLuint ssboRenderQueue = 0;
+    GLuint ssboIndirect = 0;
+    GLuint ssboInstance = 0;
 private:
     GLuint uboDirLight = 0;
     GLuint uboCamera = 0;

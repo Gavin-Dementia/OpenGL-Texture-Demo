@@ -67,7 +67,63 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     glDeleteShader(fragment);
     
 }
-    
+
+
+Shader::Shader(const char* computePath)
+{
+    std::string computeCode;
+    std::ifstream computeFile;
+
+    computeFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    try
+    {
+        computeFile.open(computePath);
+        std::stringstream computeStream;
+
+        computeStream << computeFile.rdbuf();
+
+        computeFile.close();
+
+        computeCode = computeStream.str();
+    }
+    catch (std::ifstream::failure& e)
+    {
+        std::cout << "ERROR::COMPUTE_SHADER::FILE_NOT_SUCCESSFULLY_READ\n";
+    }
+
+    const char* cShaderCode = computeCode.c_str();
+
+    unsigned int compute;
+    int success;
+    char infoLog[1024];
+
+    compute = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(compute, 1, &cShaderCode, NULL);
+    glCompileShader(compute);
+
+    glGetShaderiv(compute, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(compute, 1024, NULL, infoLog);
+        std::cout << "ERROR::COMPUTE_SHADER_COMPILATION\n" << infoLog << std::endl;
+    }
+
+    ID = glCreateProgram();
+    glAttachShader(ID, compute);
+    glLinkProgram(ID);
+
+    glGetProgramiv(ID, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(ID, 1024, NULL, infoLog);
+        std::cout << "ERROR::PROGRAM_LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
+    glDeleteShader(compute);
+}
+
+
 // activate the shader
 // ------------------------------------------------------------------------
 void Shader::use() const

@@ -24,3 +24,9 @@
 27	1787	7985487034672413	CMakeFiles/main.dir/src/core/Renderer.cpp.obj	e262a8321138bb71
 22	1916	7985487034628405	CMakeFiles/main.dir/src/main.cpp.obj	2944f2d6bd11c07d
 1916	2164	7985487053561341	C:/3Dproject/bin/main.exe	2fbb9cd47977bcde
+13	2073	7988142336808091	CMakeFiles/main.dir/src/core/Renderer.cpp.obj	e262a8321138bb71
+16	1644	7988145284954822	CMakeFiles/main.dir/src/graphics/Shader.cpp.obj	dd7d1f2d7107e588
+20	1685	7988145284989185	CMakeFiles/main.dir/src/scene/Scene.cpp.obj	f363e33b0fc8674d
+13	2074	7988145284894867	CMakeFiles/main.dir/src/core/Renderer.cpp.obj	e262a8321138bb71
+7	2161	7988145284868034	CMakeFiles/main.dir/src/main.cpp.obj	2944f2d6bd11c07d
+2161	2709	7988145306398329	C:/3Dproject/bin/main.exe	2fbb9cd47977bcde

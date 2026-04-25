@@ -162,7 +162,7 @@ void buildScene(Scene& scene, Cube& cube)
     scene.lights.pointLightDirty.resize(scene.lights.pointLights.size(), 1);
 }
 
-#if 1
+#if 0
 int main()
 {// Initialize GLFW
     // ---------------------------
@@ -288,4 +288,132 @@ int main()
 }
 
 #endif
+
+
+#if 1
+int main()
+{
+    // GLFW Init
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // compute shader 需要
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(width_, height_, "Renderer", NULL, NULL);
+    if (!window)
+    {
+        std::cout << "Failed to create window\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    glfwMakeContextCurrent(window);
+
+    // GLAD
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to init GLAD\n";
+        return -1;
+    }
+
+    glViewport(0, 0, width_, height_);
+    glEnable(GL_DEPTH_TEST);
+
+    // Input
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Shaders
+    Shader shader("C:/3Dproject/shaders/basic.vert",
+                  "C:/3Dproject/shaders/basic.frag");
+
+    Shader lightShader("C:/3Dproject/shaders/light.vert",
+                       "C:/3Dproject/shaders/light.frag");
+
+    Shader depthShader("C:/3Dproject/shaders/depth.vert",
+                       "C:/3Dproject/shaders/depth.frag");
+
+    // GPU pipeline
+    Shader computeShader("C:/3Dproject/shaders/cull_and_build_indirect.comp");
+
+    // UBO Binding
+    auto bindUBO = [](Shader& s)
+    {
+        GLint idx;
+
+        idx = glGetUniformBlockIndex(s.ID, "Camera");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 0);
+
+        idx = glGetUniformBlockIndex(s.ID, "DirLightBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 1);
+
+        idx = glGetUniformBlockIndex(s.ID, "PointLightsBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 2);
+
+        idx = glGetUniformBlockIndex(s.ID, "SpotLightBlock");
+        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 3);
+    };
+
+    bindUBO(shader);
+    bindUBO(lightShader);
+
+    // Textures
+    Texture diffuseTex("C:/3Dproject/box.png");
+    Texture specularTex("C:/3Dproject/box_specular.png");
+
+    // Scene / Renderer
+    Scene scene;
+    Renderer renderer;
+    Cube cube;
+
+    buildScene(scene, cube);
+
+    Material* defaultMat = new Material(&diffuseTex, &specularTex, 128.0f);
+    if (!scene.renderGroups.empty())
+        scene.renderGroups[0].material = defaultMat;
+
+    renderer.init();
+
+    // Timing
+    float lastFrame = 0.0f;
+
+    // Render Loop
+    while (!glfwWindowShouldClose(window))
+    {
+        float current = glfwGetTime();
+        float dt = current - lastFrame;
+        lastFrame = current;
+
+        processInput(window, dt);
+
+        // Bind textures
+        shader.use();
+        shader.setInt("material.diffuse", 0);
+        shader.setInt("material.specular", 1);
+        shader.setFloat("material.shininess", 128.0f);
+
+        diffuseTex.bind(0);
+        specularTex.bind(1);
+
+        // Render
+        renderer.render(
+            scene,
+            shader,
+            lightShader,
+            depthShader,
+            camera,
+            width_,
+            height_
+        );
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+    return 0;
+}
+#endif
+
 

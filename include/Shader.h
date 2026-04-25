@@ -19,6 +19,8 @@ public:
 
     // constructor reads and builds the shader
     Shader(const char* vertexPath, const char* fragmentPath);
+    //comopute shader
+    Shader(const char* computePath);
     // ~Shader() { glDeleteProgram(ID); }
     // use/activate the shader
     void use() const;

@@ -5,57 +5,75 @@
 
 void Renderer::init()
 {
+    // =========================
+    // UBO setup
+    // =========================
     glGenBuffers(1, &uboDirLight);
-
     glBindBuffer(GL_UNIFORM_BUFFER, uboDirLight);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(DirLightGPU), nullptr, GL_DYNAMIC_DRAW);
-
-    // binding = 1（GLSL）
     glBindBufferRange(GL_UNIFORM_BUFFER, 1, uboDirLight, 0, sizeof(DirLightGPU));
 
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    // Camera UBO (binding = 0, matches shaders)
     glGenBuffers(1, &uboCamera);
     glBindBuffer(GL_UNIFORM_BUFFER, uboCamera);
-    // layout: mat4 view, mat4 projection, vec4 viewPos => ensure size
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2 + sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboCamera, 0, sizeof(glm::mat4) * 2 + sizeof(glm::vec4));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2 + sizeof(glm::vec4),
+        nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboCamera, 0,
+        sizeof(glm::mat4) * 2 + sizeof(glm::vec4));
 
-    // Point lights UBO (binding = 2)
-    const int MAX_POINT_LIGHTS = 16; // must match shader NR_POINT_LIGHTS
     glGenBuffers(1, &uboPointLights);
     glBindBuffer(GL_UNIFORM_BUFFER, uboPointLights);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(PointLightGPU) * MAX_POINT_LIGHTS, nullptr, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 2, uboPointLights, 0, sizeof(PointLightGPU) * MAX_POINT_LIGHTS);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(PointLightGPU) * 16,
+        nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 2, uboPointLights, 0,
+        sizeof(PointLightGPU) * 16);
 
-    // Spot light UBO (binding = 3)
     glGenBuffers(1, &uboSpotLight);
     glBindBuffer(GL_UNIFORM_BUFFER, uboSpotLight);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(SpotLightGPU), nullptr, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, 3, uboSpotLight, 0, sizeof(SpotLightGPU));
+
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // Shadow map FBO + depth texture
+    // =========================
+    // SSBO: Render Queue
+    // =========================
+    glGenBuffers(1, &ssboRenderQueue);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboRenderQueue);
+
+    // allocate small first（避免 size=0 undefined behavior）
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 1024, nullptr, GL_DYNAMIC_DRAW);
+
+    // binding = 8（要跟 compute shader 一致）
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, ssboRenderQueue);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // =========================
+    // Shadow map
+    // =========================
     glGenFramebuffers(1, &depthMapFBO);
 
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    float borderColor[] = {1,1,1,1};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -102,7 +120,12 @@ void Renderer::render(Scene& scene, Shader& shader,
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, depthMap);
 
-    drawObjects(scene, shader);
+    const bool useGPU = true;
+    if (useGPU)//GPU path（upload + fallback）
+        drawObjectsGPU(scene, shader);
+    else//CPU fallback（stable baseline）
+        drawObjects(scene, shader);
+
     drawLightObjects(scene, lightShader, camera, width_, height_);
 }
 
@@ -133,88 +156,6 @@ void Renderer::uploadCamera(Shader& shader, Camera& camera,
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void Renderer::uploadLights(Shader& shader, Scene& scene)
-{
-//     auto& lights = scene.lights;
-    
-//     // =========================
-//     //  DirLight → UBO
-//     // =========================
-//     // Dir light: update only when dirty
-//     if (lights.dirDirty)
-//     {
-//         glBindBuffer(GL_UNIFORM_BUFFER, uboDirLight);
-//         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(DirLightGPU), &lights.dirLightGPU);
-//         glBindBuffer(GL_UNIFORM_BUFFER, 0);
-//         lights.dirDirty = false;
-//     }
-
-//     // shader.use();
-//     // shader.setInt("numPointLights", (int)lights.pointLights.size());
-
-//     // Debug: print current light info to console (helps verify UBO data)
-//     // std::cout << "[Renderer] DirLight direction: "
-//     //           << lights.dirLight.direction.x << ", "
-//     //           << lights.dirLight.direction.y << ", "
-//     //           << lights.dirLight.direction.z << std::endl;
-//     // std::cout << "[Renderer] numPointLights: " << lights.pointLights.size() << std::endl;
-//     // Fill GPU cache for point lights and upload to UBO (binding = 2)
-//     const int MAX_POINT_LIGHTS = 16;
-//     if (lights.pointLightsGPU.size() < MAX_POINT_LIGHTS)
-//             lights.pointLightsGPU.resize(MAX_POINT_LIGHTS);
-
-//     // Prepare GPU cache entries and perform incremental updates per-dirty light
-//     if (lights.pointLightsGPU.size() < MAX_POINT_LIGHTS)
-//         lights.pointLightsGPU.resize(MAX_POINT_LIGHTS);
-//     if (lights.pointLightDirty.size() < lights.pointLights.size())
-//         lights.pointLightDirty.resize(lights.pointLights.size(), 1);
-
-//     glBindBuffer(GL_UNIFORM_BUFFER, uboPointLights);
-//     for (size_t i = 0; i < lights.pointLights.size() && i < MAX_POINT_LIGHTS; ++i)
-//     {
-//         const auto& l = lights.pointLights[i];
-//         PointLightGPU pg;
-//         pg.position = glm::vec4(l.position, 0.0f);
-//         pg.ambient = glm::vec4(l.ambient, 0.0f);
-//         pg.diffuse = glm::vec4(l.diffuse, 0.0f);
-//         pg.specular = glm::vec4(l.specular, 0.0f);
-//         pg.params = glm::vec4(l.constant, l.linear, l.quadratic, l.intensity);
-//         lights.pointLightsGPU[i] = pg;
-
-//         if (i < lights.pointLightDirty.size() && lights.pointLightDirty[i])
-//         {
-//             // update only this light's region in the UBO
-//             GLsizeiptr offset = sizeof(PointLightGPU) * i;
-//             glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(PointLightGPU), &pg);
-//             lights.pointLightDirty[i] = 0;
-//         }
-//     }
-//     // optional readback for first light if it was dirty (debug)
-//     if (!lights.pointLights.empty() && lights.pointLightDirty.size() > 0)
-//     {
-//         // nothing — avoid expensive glGetBufferSubData in normal path
-//     }
-//     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-//     auto& s = lights.spotLight;
-//     // Fill spotLight GPU struct and upload to UBO (binding = 3)
-//     SpotLightGPU sg;
-//     sg.position  = glm::vec4(s.position, 0.0f);
-//     sg.direction = glm::vec4(s.direction, 0.0f);
-//     sg.ambient   = glm::vec4(s.ambient, 0.0f);
-//     sg.diffuse   = glm::vec4(s.diffuse, 0.0f);
-//     sg.specular  = glm::vec4(s.specular, 0.0f);
-//     sg.params1   = glm::vec4(s.cutOff, s.outerCutOff, s.constant, s.linear);
-//     sg.params2   = glm::vec4(s.quadratic, s.intensity, 0.0f, 0.0f);
-
-//     if (lights.spotDirty)
-//     {
-//         glBindBuffer(GL_UNIFORM_BUFFER, uboSpotLight);
-//         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(SpotLightGPU), &sg);
-//         glBindBuffer(GL_UNIFORM_BUFFER, 0);
-//         lights.spotDirty = false;
-//     }
-}
 
 void Renderer::uploadLights(Scene& scene)
 {
@@ -366,5 +307,59 @@ void Renderer::drawLightObjects(Scene& scene,
         lightShader.setMat4("modelLight", obj.getModel());
         obj.mesh->draw();
     }
+}
+
+void Renderer::drawObjectsGPU(Scene& scene, Shader& shader)
+{
+    shader.use();
+
+    // Build CPU queue
+    std::vector<RenderItem> queue;
+
+    for (auto& group : scene.renderGroups)
+    {
+        if (group.models.empty()) continue;
+
+        for (const auto& m : group.models)
+        {
+            RenderItem it;
+            it.mesh = group.mesh;
+            it.material = group.material;
+            it.model = m;
+            it.isEmissive = group.isEmissive;
+            it.emissiveColor = group.emissiveColor;
+            queue.push_back(it);
+        }
+    }
+    if (queue.empty()) return;
+
+    // Convert → GPU format
+    std::vector<GpuRenderItem> gpuItems;
+    gpuItems.reserve(queue.size());
+
+    for (auto& item : queue)
+    {
+        GpuRenderItem g{};
+        g.model = item.model;
+        g.meshID = 0;
+        g.materialID = 0;
+        g.emissive = item.isEmissive ? 1 : 0;
+        g.pad = 0;
+        g.emissiveColor = glm::vec4(item.emissiveColor, 0.0f);
+
+        gpuItems.push_back(g);
+    }
+
+    // Upload to SSBO
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboRenderQueue);
+
+    glBufferData(GL_SHADER_STORAGE_BUFFER, gpuItems.size() * sizeof(GpuRenderItem),
+        gpuItems.data(), GL_DYNAMIC_DRAW);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, ssboRenderQueue);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // TEMP fallback
+    drawObjects(scene, shader);
 }
 
