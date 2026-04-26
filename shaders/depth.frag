@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 // empty fragment shader: depth only
 void main()

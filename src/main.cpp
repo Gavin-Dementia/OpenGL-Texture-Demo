@@ -373,7 +373,8 @@ int main()
     if (!scene.renderGroups.empty())
         scene.renderGroups[0].material = defaultMat;
 
-    renderer.init();
+    // renderer.init();
+    renderer.init_GPu();
 
     // Timing
     float lastFrame = 0.0f;
@@ -402,6 +403,7 @@ int main()
             shader,
             lightShader,
             depthShader,
+            computeShader,
             camera,
             width_,
             height_

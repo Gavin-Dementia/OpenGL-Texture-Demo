@@ -10,10 +10,12 @@ class Renderer
 {
 public:
     void init();
+    void init_GPu();
     void render(Scene& scene,
                 Shader& shader,
                 Shader& lightShader,
                 Shader& depthShader,
+                Shader& computeShader, 
                 Camera& camera,
                 float width_, float height_);
 
@@ -35,6 +37,9 @@ private:
     void drawLightObjects(Scene& scene, Shader& lightShader, Camera& camera,
                           float width, float height);
     void drawObjectsGPU(Scene& scene, Shader& shader);
+    void drawObjectsGPU(Scene& scene, Shader& shader,
+                        Shader& computeShader, Camera& camera,
+                        float width_, float height_);
 public:
     struct RenderItem {
         Mesh* mesh = nullptr;
@@ -47,15 +52,45 @@ public:
     struct GpuRenderItem 
     {
         glm::mat4 model;
+        glm::vec4 bounding; // xyz = center, w = radius
+        glm::vec4 emissiveColor;
         uint32_t meshID;
         uint32_t materialID;
         uint32_t emissive;
         uint32_t pad; // std430 alignment
-        glm::vec4 emissiveColor;
+    };
+
+    struct DrawElementsIndirectCommand 
+    {
+        uint32_t count;
+        uint32_t instanceCount;
+        uint32_t firstIndex;
+        uint32_t baseVertex;
+        uint32_t baseInstance;
+    };
+
+    struct GpuMesh 
+    {
+        uint32_t indexCount;
+        uint32_t firstIndex;
+        uint32_t baseVertex;
+        uint32_t pad;
+    };
+
+    struct DrawCommand
+    {
+        uint32_t count;
+        uint32_t instanceCount;
+        uint32_t firstIndex;
+        uint32_t baseVertex;
+        uint32_t baseInstance;
     };
 private:
     GLuint ssboRenderQueue = 0;
-    GLuint ssboIndirect = 0;
+    GLuint ssboMeshData = 0;
+    GLuint counterBuffer;
+    GLuint commandBuffer;
+    GLuint indirectBuffer = 0;
     GLuint ssboInstance = 0;
 private:
     GLuint uboDirLight = 0;

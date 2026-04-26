@@ -2,12 +2,103 @@
 #include "Material.h"
 #include <algorithm>
 #include <cstdint>
+#include <glm/gtc/type_ptr.hpp>
+#include <unordered_map>
+
+void Renderer::init_GPu()
+{
+        // =========================
+    // UBO setup
+    glGenBuffers(1, &uboDirLight);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboDirLight);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(DirLightGPU), nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, uboDirLight, 0, sizeof(DirLightGPU));
+
+    glGenBuffers(1, &uboCamera);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboCamera);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2 + sizeof(glm::vec4),
+        nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboCamera, 0,
+        sizeof(glm::mat4) * 2 + sizeof(glm::vec4));
+
+    glGenBuffers(1, &uboPointLights);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboPointLights);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(PointLightGPU) * 16,
+        nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 2, uboPointLights, 0,
+        sizeof(PointLightGPU) * 16);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    // =========================
+    // 1. Render Queue SSBO (binding = 0)    
+    glGenBuffers(1, &ssboRenderQueue);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboRenderQueue);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 1, nullptr, GL_DYNAMIC_DRAW); // dummy alloc
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboRenderQueue);
+
+    // =========================
+    // 2. Mesh SSBO (binding = 1)
+    glGenBuffers(1, &ssboMeshData);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMeshData);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 1, nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshData);
+
+    // =========================
+    // 3. Counter SSBO (binding = 2)
+    glGenBuffers(1, &counterBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
+
+    uint32_t zero = 0;
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(uint32_t), &zero, GL_DYNAMIC_DRAW);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, counterBuffer);
+
+    // =========================
+    // 4. Indirect buffer
+    glGenBuffers(1, &commandBuffer);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
+
+    glBufferData(GL_DRAW_INDIRECT_BUFFER,
+        100000 * sizeof(DrawCommand),
+        nullptr,
+        GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+    // =========================
+    // Shadow map
+    glGenFramebuffers(1, &depthMapFBO);
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+    float borderColor[] = {1,1,1,1};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D, depthMap, 0);
+
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
 void Renderer::init()
 {
     // =========================
     // UBO setup
-    // =========================
     glGenBuffers(1, &uboDirLight);
     glBindBuffer(GL_UNIFORM_BUFFER, uboDirLight);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(DirLightGPU), nullptr, GL_DYNAMIC_DRAW);
@@ -36,7 +127,6 @@ void Renderer::init()
 
     // =========================
     // SSBO: Render Queue
-    // =========================
     glGenBuffers(1, &ssboRenderQueue);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboRenderQueue);
 
@@ -50,9 +140,7 @@ void Renderer::init()
 
     // =========================
     // Shadow map
-    // =========================
     glGenFramebuffers(1, &depthMapFBO);
-
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);
 
@@ -79,7 +167,7 @@ void Renderer::init()
 
 void Renderer::render(Scene& scene, Shader& shader,
                       Shader& lightShader, Shader& depthShader,
-                      Camera& camera,
+                      Shader& computeShader, Camera& camera,
                       float width_, float height_)
 {
     glEnable(GL_DEPTH_TEST);
@@ -122,7 +210,10 @@ void Renderer::render(Scene& scene, Shader& shader,
 
     const bool useGPU = true;
     if (useGPU)//GPU path（upload + fallback）
+    {
         drawObjectsGPU(scene, shader);
+        // drawObjectsGPU(scene, shader, computeShader, camera, width_, height_);        
+    }
     else//CPU fallback（stable baseline）
         drawObjects(scene, shader);
 
@@ -363,3 +454,129 @@ void Renderer::drawObjectsGPU(Scene& scene, Shader& shader)
     drawObjects(scene, shader);
 }
 
+void Renderer::drawObjectsGPU(Scene& scene,
+                              Shader& shader,
+                              Shader& computeShader,
+                              Camera& camera,
+                              float width_,
+                              float height_)
+{
+    shader.use();
+
+    // =========================
+    // 1. CPU build queue
+    std::vector<RenderItem> queue;
+
+    for (auto& group : scene.renderGroups)
+    {
+        for (auto& m : group.models)
+        {
+            RenderItem it;
+            it.mesh = group.mesh;
+            it.material = group.material;
+            it.model = m;
+            it.isEmissive = group.isEmissive;
+            it.emissiveColor = group.emissiveColor;
+            queue.push_back(it);
+        }
+    }
+
+    if (queue.empty()) return;
+
+    // =========================
+    // 2. GPU buffers
+    std::vector<GpuRenderItem> gpuItems;
+    std::unordered_map<Mesh*, uint32_t> meshMap;
+    std::vector<GpuMesh> gpuMeshes;
+
+    for (auto& item : queue)
+    {
+        if (!meshMap.count(item.mesh))
+        {
+            meshMap[item.mesh] = gpuMeshes.size();
+
+            gpuMeshes.push_back({
+                item.mesh->indexCount,
+                item.mesh->firstIndex,
+                item.mesh->baseVertex,
+                0
+            });
+        }
+
+        gpuItems.push_back({
+            item.model,
+            glm::vec4(item.mesh->boundingCenter, item.mesh->boundingRadius),
+            glm::vec4(item.emissiveColor, 0.0f),
+            meshMap[item.mesh],
+            0,
+            item.isEmissive ? 1u : 0u,
+            0
+        });
+    }
+
+    // =========================
+    // 3. Upload SSBOs
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboRenderQueue);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+                 gpuItems.size() * sizeof(GpuRenderItem),
+                 gpuItems.data(),
+                 GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMeshData);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+                 gpuMeshes.size() * sizeof(GpuMesh),
+                 gpuMeshes.data(),
+                 GL_STATIC_DRAW);
+
+    // =========================
+    // 4. RESET drawCount
+    uint32_t zero = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(uint32_t), &zero);
+
+    // =========================
+    // 5. COMPUTE
+    computeShader.use();
+
+    glm::mat4 viewProj =
+        camera.GetProjectionMatrix(width_ / height_) *
+        camera.GetViewMatrix();
+
+    glUniformMatrix4fv(glGetUniformLocation(computeShader.ID, "uViewProj"),
+                       1, GL_FALSE, glm::value_ptr(viewProj));
+
+    glUniform1ui(glGetUniformLocation(computeShader.ID, "numItems"),
+                 gpuItems.size());
+
+    glUniform1f(glGetUniformLocation(computeShader.ID, "errorThreshold"),
+                0.5f);
+
+    glDispatchCompute((gpuItems.size() + 63) / 64, 1, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
+                    GL_COMMAND_BARRIER_BIT);
+
+    // =========================
+    // 6. READ drawCount
+    uint32_t drawCount = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,
+                       sizeof(uint32_t), &drawCount);
+
+    if (drawCount == 0)
+        return;
+
+    // =========================
+    // 7. INDIRECT DRAW
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
+
+    glBindVertexArray(queue[0].mesh->getVAO());
+
+    glMultiDrawElementsIndirect(
+        GL_TRIANGLES,
+        GL_UNSIGNED_INT,
+        (void*)sizeof(uint32_t), // skip drawCount
+        drawCount,
+        0
+    );
+}

@@ -1,56 +1,56 @@
 #version 430 core
-
 layout(local_size_x = 64) in;
 
-// =========================
-// Input: Render Items
-// =========================
-struct GpuRenderItem {
+struct GpuRenderItem 
+{
+    mat4 model;
+    vec4 bounding;
+    vec4 emissiveColor;
+
     uint meshID;
     uint materialID;
     uint emissive;
     uint pad;
-    mat4 model;
-    vec4 emissiveColor;
 };
 
-layout(std430, binding = 8) readonly buffer RenderQueue
+struct GpuMesh 
 {
+    uint indexCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint pad;
+};
+
+struct DrawCommand 
+{
+    uint count;
+    uint instanceCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
+};
+
+layout(std430, binding = 8) readonly buffer RenderQueue {
     GpuRenderItem items[];
 };
 
-// =========================
-// Output: Indirect Draw Buffer
-// Layout must match OpenGL indirect draw format
-// =========================
-layout(std430, binding = 9) buffer IndirectBuffer
-{
+layout(std430, binding = 9) buffer Counter {
     uint drawCount;
-    uint commands[];
 };
 
-// =========================
-// Camera
-// =========================
+layout(std430, binding = 10) readonly buffer MeshBuffer {
+    GpuMesh meshes[];
+};
+
+layout(std430, binding = 11) buffer CommandBuffer {
+    DrawCommand commands[];
+};
+
 uniform mat4 uViewProj;
 uniform uint numItems;
+uniform float errorThreshold;
 
-// =========================
-// Frustum culling
-// =========================
-bool isInsideFrustum(vec4 clip)
-{
-    if (clip.w == 0.0) return false;
-
-    return !(abs(clip.x) > clip.w ||
-             abs(clip.y) > clip.w ||
-             clip.z < -clip.w ||
-             clip.z > clip.w);
-}
-
-// =========================
-// Main
-// =========================
+#if 0
 void main()
 {
     uint gid = gl_GlobalInvocationID.x;
@@ -58,37 +58,52 @@ void main()
 
     GpuRenderItem item = items[gid];
 
-    // =========================
-    // Extract world position
-    // =========================
-    vec4 worldPos = item.model[3];
+    vec3 center = item.bounding.xyz;
+    float radius = item.bounding.w;
 
-    vec4 clipPos = uViewProj * worldPos;
+    vec4 worldCenter = item.model * vec4(center, 1.0);
+    vec4 clip = uViewProj * worldCenter;
 
-    // =========================
-    // Frustum culling
-    // =========================
-    if (!isInsideFrustum(clipPos))
+    if (clip.w <= 0.0) return;
+
+    if (abs(clip.x) > clip.w ||
+        abs(clip.y) > clip.w ||
+        clip.z < -clip.w ||
+        clip.z > clip.w)
         return;
 
-    // =========================
-    // Append to indirect buffer
-    // =========================
-    uint index = atomicAdd(drawCount, 1u);
+    float dist = length(worldCenter.xyz);
+    float error = radius / dist;
 
-    uint base = index * 5u;
+    if (error > errorThreshold)
+        return;
 
-    // OpenGL DrawElementsIndirectCommand layout:
-    // uint count;
-    // uint instanceCount;
-    // uint firstIndex;
-    // uint baseVertex;
-    // uint baseInstance;
+    uint idx = atomicAdd(drawCount, 1u);
 
-    commands[base + 0] = 36u;   // cube index count (FIX ME per mesh later)
-    commands[base + 1] = 1u;    // instance count (will override later if needed)
-    commands[base + 2] = 0u;    // first index
-    commands[base + 3] = 0u;    // base vertex
-    commands[base + 4] = gid;   // base instance = object id
+    GpuMesh mesh = meshes[item.meshID];
+
+    commands[idx].count = mesh.indexCount;
+    commands[idx].instanceCount = 1;
+    commands[idx].firstIndex = mesh.firstIndex;
+    commands[idx].baseVertex = mesh.baseVertex;
+    commands[idx].baseInstance = gid;
 }
+#endif
 
+#if 1
+void main()
+{
+    uint gid = gl_GlobalInvocationID.x;
+    if (gid >= numItems) return;
+
+    uint idx = atomicAdd(drawCount, 1u);
+
+    GpuMesh mesh = meshes[items[gid].meshID];
+
+    commands[idx].count = mesh.indexCount;
+    commands[idx].instanceCount = 1;
+    commands[idx].firstIndex = mesh.firstIndex;
+    commands[idx].baseVertex = mesh.baseVertex;
+    commands[idx].baseInstance = gid;
+}
+#endif

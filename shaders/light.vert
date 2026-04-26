@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 layout (location = 0) in vec3 aPos;
 
 // Use the same Camera UBO as other shaders (binding = 0)

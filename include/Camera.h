@@ -9,7 +9,8 @@ public:
 
     Camera(glm::vec3 position, glm::vec3 worldup, float pitch, float yaw= -90.0f);
     
-    glm::mat4 GetViewMatrix();
+    glm::mat4 GetViewMatrix();    
+    glm::mat4 GetProjectionMatrix(float aspectRatio);
 
     float Pitch;
     float Yaw;
