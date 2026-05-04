@@ -4,10 +4,288 @@
 #include <cstdint>
 #include <glm/gtc/type_ptr.hpp>
 #include <unordered_map>
+#define BIND_RENDER_QUEUE 8
+#define BIND_COUNTER      9
+#define BIND_MESH        10
+#define BIND_COMMAND     11
 
-void Renderer::init_GPu()
+// Bind SSBOs / indirect buffer to the bindings expected by the compute shader
+void Renderer::bindGpuDrivenBuffersForCompute()
 {
-        // =========================
+    // RenderQueue
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_RENDER_QUEUE, ssboRenderQueue);
+    // Counter
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_COUNTER, counterBuffer);
+    // Mesh data
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_MESH, ssboMeshData);
+    // Command buffer (also bind as GL_DRAW_INDIRECT_BUFFER)
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_COMMAND, commandBuffer);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
+}
+
+void Renderer::initGlobalVAO()
+{
+    glGenVertexArrays(1, &globalVAO);
+    glGenBuffers(1, &globalVBO);
+    glGenBuffers(1, &globalEBO);
+
+    glBindVertexArray(globalVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, globalVBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, globalEBO);
+
+    //pos(3) normal(3) uv(2)
+
+    GLsizei stride = sizeof(float) * 8;
+
+    glEnableVertexAttribArray(0); // position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+
+    glEnableVertexAttribArray(1); // normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float)*3));
+
+    glEnableVertexAttribArray(2); // uv
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float)*6));
+
+    glBindVertexArray(0);
+}
+
+// Copy the uint drawCount from counterBuffer into the first 4 bytes of commandBuffer
+// so that glMultiDrawElementsIndirect can use the buffer with an initial counter slot.
+void Renderer::copyCounterToIndirectBuffer()
+{
+    glBindBuffer(GL_COPY_READ_BUFFER, counterBuffer);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, commandBuffer);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(GLuint));
+    glBindBuffer(GL_COPY_READ_BUFFER, 0);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+}
+
+// Validate capacity of commandBuffer (debug helper)
+bool Renderer::validateCommandBufferCapacity(size_t maxCommandsExpected)
+{
+    GLint bufferSize = 0;
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
+    glGetBufferParameteriv(GL_DRAW_INDIRECT_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+    size_t capacity = (size_t)bufferSize / sizeof(DrawElementsIndirectCommand);
+    // Reserve one slot if using the first uint as counter header
+    return (capacity >= maxCommandsExpected + 1);
+}
+
+// High-level dispatch wrapper (commented template) that shows a safer compute->indirect flow.
+void Renderer::dispatchCullingComputeAndDraw(Shader& computeShader,
+                                            Shader& shader,
+                                            Camera& camera,
+                                            size_t numItems,
+                                            GLuint currentVAO)
+{
+    // 1) Bind expected buffers
+    bindGpuDrivenBuffersForCompute();
+
+    // 2) Reset counter
+    GLuint zero = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint), &zero);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // 3) Set compute uniforms
+    computeShader.use();
+    glm::mat4 viewProj = camera.GetProjectionMatrix(1.0f) * camera.GetViewMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(computeShader.ID, "uViewProj"), 1, GL_FALSE, glm::value_ptr(viewProj));
+    glUniform1ui(glGetUniformLocation(computeShader.ID, "numItems"), (GLuint)numItems);
+    // glUniform1ui(glGetUniformLocation(computeShader.ID, "maxCommands"),MAX_COMMANDS);
+
+    // 4) Dispatch
+    GLuint groups = (GLuint)((numItems + 63) / 64);
+    glDispatchCompute(groups, 1, 1);
+
+    // 5) Memory barrier to ensure SSBOs and indirect buffer are visible to draw
+    glMemoryBarrier(GL_COMMAND_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+
+
+    // 7) Read back drawCount for CPU-side decision
+    GLuint drawCount = 0;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint), &drawCount);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    if (drawCount == 0) return;
+
+    // 8) Execute indirect draw.
+    glBindVertexArray(currentVAO);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
+    void* offset = (void*)0;
+    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, offset, drawCount, 0);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Renderer::uploadRenderQueue(const std::vector<Renderer::GpuRenderItem>& items)
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboRenderQueue);
+
+    // allocate and upload full render queue
+    glBufferData(GL_SHADER_STORAGE_BUFFER, items.size() * sizeof(Renderer::GpuRenderItem), items.data(), GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+std::vector<Renderer::GpuRenderItem>
+Renderer::buildRenderQueue(Scene& scene)
+{
+    std::vector<Renderer::GpuRenderItem> queue;
+
+    size_t totalInstances = 0;
+    for (auto& g : scene.renderGroups)
+        totalInstances += g.models.size();
+
+    queue.reserve(std::min<size_t>(totalInstances, MAX_RENDER_ITEMS));
+
+    for (auto& group : scene.renderGroups)
+    {
+        if (group.models.empty() || group.mesh == nullptr)
+            continue;
+
+        auto it = meshIndexMap.find(group.mesh);
+        if (it == meshIndexMap.end())
+        {
+            std::cerr << "[WARN] mesh not found in meshIndexMap\n";
+            continue;
+        }
+
+        uint32_t meshID = it->second;
+
+        for (const auto& m : group.models)
+        {
+            Renderer::GpuRenderItem item{};
+
+            item.meshID = meshID;
+            item.materialID = 0;
+            item.model = m;
+
+            item.emissive = group.isEmissive ? 1u : 0u;
+            item.emissiveColor = glm::vec4(group.emissiveColor, 0.0f);
+
+            item.bounding = glm::vec4(
+                group.mesh->boundingCenter,
+                std::max(0.001f, group.mesh->boundingRadius)
+            );
+
+            queue.push_back(item);
+
+            if (queue.size() >= MAX_COMMANDS)
+                return queue;
+        }
+    }
+
+    return queue;
+}
+    
+// Build a global vertex/index buffer bundling meshes used by the scene.
+// This populates `globalVBO`, `globalEBO`, configures `globalVAO`, and uploads
+// a GPU-friendly `ssboMeshData` containing per-mesh (indexCount, firstIndex, baseVertex).
+// It reads individual mesh VBOs (via Mesh::getVBO()) and concatenates their vertex data.
+// For meshes without an element buffer, sequential indices are generated.
+#if 1
+void Renderer::buildGlobalMeshBuffer(Scene& scene)
+{
+    if (globalVAO == 0) initGlobalVAO();
+
+    meshIndexMap.clear();
+    gpuMeshes.clear();
+
+    std::vector<uint8_t> vertexData;
+    std::vector<uint32_t> indexData;
+
+    uint32_t vertexBase = 0;
+    uint32_t indexBase  = 0;
+
+    const int stride = sizeof(float) * 8;
+
+    for (auto& g : scene.renderGroups)
+    {
+        Mesh* mesh = g.mesh;
+        if (!mesh) continue;
+
+        if (meshIndexMap.count(mesh)) continue;
+
+        uint32_t id = (uint32_t)gpuMeshes.size();
+        meshIndexMap[mesh] = id;
+
+        GLuint vbo = mesh->getVBO();
+        GLuint ebo = mesh->getEBO();
+
+        if (vbo == 0 || ebo == 0)
+        {
+            gpuMeshes.push_back({mesh->indexCount, mesh->firstIndex, mesh->baseVertex, 0});
+            continue;
+        }
+
+        // vertex
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        GLint vsize = 0;
+        glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &vsize);
+
+        size_t old = vertexData.size();
+        vertexData.resize(old + vsize);
+
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, vsize, vertexData.data() + old);
+
+        uint32_t vcount = vsize / stride;
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // index
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        GLint isize = 0;
+        glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &isize);
+
+        std::vector<uint32_t> indices(isize / sizeof(uint32_t));
+        glGetBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, isize, indices.data());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        for (auto i : indices)
+            indexData.push_back(i + vertexBase);
+
+        gpuMeshes.push_back({
+            (uint32_t)indices.size(),
+            indexBase,
+            vertexBase,
+            0
+        });
+
+        vertexBase += vcount;
+        indexBase  += indices.size();
+    }
+
+    // upload VAO buffers
+    glBindVertexArray(globalVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, globalVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertexData.size(), vertexData.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, globalEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData.size() * 4, indexData.data(), GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+
+    // mesh SSBO
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMeshData);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        gpuMeshes.size() * sizeof(GpuMesh),
+        gpuMeshes.data(),
+        GL_STATIC_DRAW);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshData);
+
+    globalMeshBuilt = true;
+}
+#endif
+    
+void Renderer::init_GPU()
+{
+    // =========================
     // UBO setup
     glGenBuffers(1, &uboDirLight);
     glBindBuffer(GL_UNIFORM_BUFFER, uboDirLight);
@@ -60,12 +338,15 @@ void Renderer::init_GPu()
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
 
     glBufferData(GL_DRAW_INDIRECT_BUFFER,
-        100000 * sizeof(DrawCommand),
+        sizeof(GLuint) + MAX_COMMANDS * sizeof(DrawCommand),
         nullptr,
         GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+    // prepare global VAO/VBO/EBO for later consolidation
+    // initGlobalVAO();
 
     // =========================
     // Shadow map
@@ -137,6 +418,9 @@ void Renderer::init()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, ssboRenderQueue);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // prepare global VAO/VBO/EBO
+    // initGlobalVAO();
 
     // =========================
     // Shadow map
@@ -211,6 +495,16 @@ void Renderer::render(Scene& scene, Shader& shader,
     const bool useGPU = true;
     if (useGPU)//GPU path（upload + fallback）
     {
+        // if (!globalMeshBuilt)
+        // {
+        //     buildGlobalMeshBuffer(scene);
+        //     globalMeshBuilt = true;
+        // }
+
+        // auto queue = buildRenderQueue(scene);
+        // uploadRenderQueue(queue);
+
+        // dispatchCullingComputeAndDraw(computeShader, shader, camera, queue.size(), globalVAO);
         drawObjectsGPU(scene, shader);
         // drawObjectsGPU(scene, shader, computeShader, camera, width_, height_);        
     }
@@ -246,7 +540,6 @@ void Renderer::uploadCamera(Shader& shader, Camera& camera,
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraGPU), &cam);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
-
 
 void Renderer::uploadLights(Scene& scene)
 {
@@ -570,13 +863,15 @@ void Renderer::drawObjectsGPU(Scene& scene,
     // 7. INDIRECT DRAW
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer);
 
-    glBindVertexArray(queue[0].mesh->getVAO());
+    // use consolidated global VAO (contains merged vertex/element data)
+    glBindVertexArray(globalVAO);
 
     glMultiDrawElementsIndirect(
         GL_TRIANGLES,
         GL_UNSIGNED_INT,
-        (void*)sizeof(uint32_t), // skip drawCount
+        (void*)0,
         drawCount,
         0
     );
 }
+

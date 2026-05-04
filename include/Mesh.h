@@ -26,13 +26,16 @@ public:
 protected:
     unsigned int VAO = 0;
     unsigned int VBO = 0;
+    unsigned int EBO = 0; 
     unsigned int instanceVBO = 0;
 
     int instanceCount = 0;
 public:
     unsigned int getVAO() const { return VAO; }
     unsigned int getVBO() const { return VBO; }
+    unsigned int getEBO() const { return EBO; }
     unsigned int getInstanceVBO() const { return instanceVBO; }
+    bool hasIndexBuffer() const { return EBO != 0; }
 };
 
 #endif

@@ -30,25 +30,65 @@ struct DrawCommand
     uint baseInstance;
 };
 
-layout(std430, binding = 8) readonly buffer RenderQueue {
-    GpuRenderItem items[];
-};
-
-layout(std430, binding = 9) buffer Counter {
-    uint drawCount;
-};
-
-layout(std430, binding = 10) readonly buffer MeshBuffer {
-    GpuMesh meshes[];
-};
-
-layout(std430, binding = 11) buffer CommandBuffer {
-    DrawCommand commands[];
-};
+layout(std430, binding = 8) readonly buffer RenderQueue { GpuRenderItem items[]; };
+layout(std430, binding = 9) buffer Counter { uint drawCount; };
+layout(std430, binding = 10) readonly buffer MeshBuffer { GpuMesh meshes[]; };
+layout(std430, binding = 11) buffer CommandBuffer { DrawCommand commands[]; };
 
 uniform mat4 uViewProj;
 uniform uint numItems;
 uniform float errorThreshold;
+uniform uint maxCommands; // optional safety cap passed from CPU
+uniform uint meshCount;
+
+#if 1
+void main()
+{
+    uint gid = gl_GlobalInvocationID.x;
+    if (gid >= numItems) return;
+
+    // Basic sphere/clip test for frustum culling
+    GpuRenderItem item = items[gid];
+    
+    //in world space
+    vec3 center = item.bounding.xyz;
+    float radius = item.bounding.w;
+    
+    //in clip space
+    vec4 worldCenter = item.model * vec4(center, 1.0);
+    vec4 clip = uViewProj * worldCenter;
+
+    if (clip.w <= 0.0) return;//behind camera
+    if (abs(clip.x) > clip.w || 
+        abs(clip.y) > clip.w || 
+        clip.z < -clip.w || 
+        clip.z > clip.w) //outside frustum
+        return;
+
+    float dist = length(worldCenter.xyz);
+    float error = radius / max(1e-6, dist);
+    if (error > errorThreshold) return;
+
+    uint meshID = item.meshID;
+    if (meshID >= meshCount) return;
+    
+    GpuMesh mesh = meshes[item.meshID];
+    
+    uint idx = atomicAdd(drawCount, 1u);
+
+    // optional safety cap check
+    if (idx >= maxCommands) {  return;  }
+
+    DrawCommand cmd;
+    cmd.count = mesh.indexCount;
+    cmd.instanceCount = 1;
+    cmd.firstIndex = mesh.firstIndex;
+    cmd.baseVertex = mesh.baseVertex;
+    cmd.baseInstance = gid;
+
+    commands[idx] = cmd;
+}
+#endif 
 
 #if 0
 void main()
@@ -58,11 +98,14 @@ void main()
 
     GpuRenderItem item = items[gid];
 
+    // =========================
+    // 1. Frustum / distance cull（你原本應該有）
+    // =========================
     vec3 center = item.bounding.xyz;
     float radius = item.bounding.w;
 
-    vec4 worldCenter = item.model * vec4(center, 1.0);
-    vec4 clip = uViewProj * worldCenter;
+    vec4 world = item.model * vec4(center, 1.0);
+    vec4 clip = uViewProj * world;
 
     if (clip.w <= 0.0) return;
 
@@ -72,38 +115,31 @@ void main()
         clip.z > clip.w)
         return;
 
-    float dist = length(worldCenter.xyz);
-    float error = radius / dist;
+    // =========================
+    // 2. safe mesh fetch
+    // =========================
+    uint meshID = item.meshID;
+    if (meshID >= meshCount) return;
 
-    if (error > errorThreshold)
-        return;
+    GpuMesh mesh = meshes[meshID];
 
+    // =========================
+    // 3. NOW allocate slot
+    // =========================
     uint idx = atomicAdd(drawCount, 1u);
 
-    GpuMesh mesh = meshes[item.meshID];
+    if (idx >= maxCommands)
+        return; // safe: AFTER allocation still OK (rare overflow case)
 
-    commands[idx].count = mesh.indexCount;
-    commands[idx].instanceCount = 1;
-    commands[idx].firstIndex = mesh.firstIndex;
-    commands[idx].baseVertex = mesh.baseVertex;
-    commands[idx].baseInstance = gid;
-}
-#endif
-
-#if 1
-void main()
-{
-    uint gid = gl_GlobalInvocationID.x;
-    if (gid >= numItems) return;
-
-    uint idx = atomicAdd(drawCount, 1u);
-
-    GpuMesh mesh = meshes[items[gid].meshID];
-
-    commands[idx].count = mesh.indexCount;
-    commands[idx].instanceCount = 1;
-    commands[idx].firstIndex = mesh.firstIndex;
-    commands[idx].baseVertex = mesh.baseVertex;
-    commands[idx].baseInstance = gid;
+    // =========================
+    // 4. write command
+    // =========================
+    commands[idx] = DrawCommand(
+        mesh.indexCount,
+        1,
+        mesh.firstIndex,
+        mesh.baseVertex,
+        gid
+    );
 }
 #endif

@@ -374,7 +374,7 @@ int main()
         scene.renderGroups[0].material = defaultMat;
 
     // renderer.init();
-    renderer.init_GPu();
+    renderer.init_GPU();
 
     // Timing
     float lastFrame = 0.0f;
