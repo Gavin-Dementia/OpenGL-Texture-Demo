@@ -130,3 +130,36 @@ The GPU pipeline will be reintroduced incrementally following these milestones:
 
 ### Final Assessment
 While the implementation failed to meet the deployment criteria, the diagnostic process successfully identified systemic architectural weaknesses that must be addressed to support a production-grade GPU-driven renderer.
+
+# 07/05/2026
+## Bug: `buildGlobalMeshBuffer` skipped non-indexed meshes (Cube missing in GPU-driven path)
+
+---
+
+Summary:
+
+- **Symptom**: When using the GPU-driven path, cubes (and other non-indexed meshes) did not appear — their geometry was not present in the consolidated `globalVBO`/`globalEBO` used for indirect draws.
+
+- **Cause**: `Renderer::buildGlobalMeshBuffer` originally required both a VBO and an EBO to be present. Meshes like `Cube` create vertex data only (no EBO) and render with `glDrawArrays`. The original code skipped these meshes or pushed incomplete `gpuMeshes` entries, so their vertex/index data never made it into the merged buffers or `ssboMeshData` mapping used by the compute culling/draw path.
+
+- **Fix Applied**: Updated `buildGlobalMeshBuffer` to:
+  - Copy vertex bytes from each mesh VBO into the merged `vertexData` buffer.
+  - If the mesh has an EBO, copy and adjust indices by `vertexBase` as before.
+  - If the mesh has no EBO (non-indexed), generate sequential indices (0..vcount-1) and append them (offset by `vertexBase`).
+  - Only skip a mesh if it lacks a VBO (which is a genuine error); emit a warning in that case.
+
+- **Files changed**: [src/core/Renderer.cpp](src/core/Renderer.cpp)
+
+Reproduction steps:
+
+1. Build and run with `useGPU = true` in `Renderer::render` (GPU-driven path enabled).
+2. Ensure the scene contains `Cube` instances (created via `Cube` constructor in `src/objects/Cube.cpp`).
+3. Observe that previously cubes were invisible; after the fix they should appear when the indirect draw path is used.
+
+Verification / Next steps:
+
+- Compile & run the app and confirm the cube(s) render in GPU-driven mode.
+- Optionally add debug logging in `buildGlobalMeshBuffer` to print `vertexData.size()`, `indexData.size()`, and `gpuMeshes.size()` after consolidation.
+- Consider consolidating `meshIndexMap` usage across CPU/GPU paths (there are separate local `meshMap` variables in different functions) to avoid future mismatch bugs.
+
+Status: fix applied in code; runtime verification pending.
