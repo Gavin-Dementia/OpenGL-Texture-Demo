@@ -9,6 +9,9 @@ set(SRC_FILES
     src/Camera.cpp
 
     src/core/Renderer.cpp
+    src/core/RendererCPU.cpp
+    src/core/RendererGPU.cpp
+
 
     src/graphics/Shader.cpp
     src/graphics/Texture.cpp
