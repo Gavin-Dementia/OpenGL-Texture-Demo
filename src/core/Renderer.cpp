@@ -217,13 +217,13 @@ void Renderer::buildGlobalMeshBuffer(Scene& scene)
         GLuint vbo = mesh->getVBO();
         GLuint ebo = mesh->getEBO();
 
-        if (vbo == 0 || ebo == 0)
+        if (vbo == 0)
         {
-            gpuMeshes.push_back({mesh->indexCount, mesh->firstIndex, mesh->baseVertex, 0});
+            std::cerr << "[WARN] mesh has no VBO, skipping\n";
             continue;
         }
 
-        // vertex
+        // vertex: copy vertex buffer bytes
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         GLint vsize = 0;
         glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &vsize);
@@ -233,30 +233,43 @@ void Renderer::buildGlobalMeshBuffer(Scene& scene)
 
         glGetBufferSubData(GL_ARRAY_BUFFER, 0, vsize, vertexData.data() + old);
 
-        uint32_t vcount = vsize / stride;
+        uint32_t vcount = (uint32_t)(vsize / stride);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        // index
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        GLint isize = 0;
-        glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &isize);
+        // index: if mesh has an EBO, copy it; otherwise generate sequential indices
+        uint32_t indexCount = 0;
+        if (ebo != 0)
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+            GLint isize = 0;
+            glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &isize);
 
-        std::vector<uint32_t> indices(isize / sizeof(uint32_t));
-        glGetBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, isize, indices.data());
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            std::vector<uint32_t> indices(isize / sizeof(uint32_t));
+            glGetBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, isize, indices.data());
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        for (auto i : indices)
-            indexData.push_back(i + vertexBase);
+            for (auto i : indices)
+                indexData.push_back(i + vertexBase);
+
+            indexCount = (uint32_t)indices.size();
+        }
+        else
+        {
+            // non-indexed mesh (e.g., Cube): generate sequential indices
+            indexCount = vcount;
+            for (uint32_t i = 0; i < vcount; ++i)
+                indexData.push_back(i + vertexBase);
+        }
 
         gpuMeshes.push_back({
-            (uint32_t)indices.size(),
+            indexCount,
             indexBase,
             vertexBase,
             0
         });
 
         vertexBase += vcount;
-        indexBase  += indices.size();
+        indexBase  += indexCount;
     }
 
     // upload VAO buffers
