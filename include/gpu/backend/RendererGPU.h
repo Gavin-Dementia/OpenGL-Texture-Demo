@@ -1,0 +1,44 @@
+#ifndef RENDERER_GPU_H
+#define RENDERER_GPU_H
+#include <glad/glad.h>
+#include "graphics/Shader.h"
+
+class GPUScene;
+class VisibilitySystem;
+
+class RendererGPU
+{
+public:
+    RendererGPU() = default;
+
+    void init();
+
+    void render(
+        GPUScene& scene,
+        VisibilitySystem& visibility,
+        GLuint vao,
+        int drawCount);
+
+    void setDebugDraw(bool enable) { debugDraw = enable; }
+
+private:
+    void drawIndirect(
+        GLuint vao,
+        int drawCount);
+
+    void drawIndirectDebug(
+        GLuint vao,
+        VisibilitySystem& visibility,
+        Shader& debugShader);
+
+private:
+
+    Shader normalShader;
+    Shader debugShader;
+
+    bool debugDraw = true;
+    static constexpr int MAX_MESHES = 10000;
+};
+
+#endif // RENDERER_GPU_H
+

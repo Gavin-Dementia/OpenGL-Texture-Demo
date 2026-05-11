@@ -2,7 +2,7 @@
 #define CUBE_H
 
 #include <glad/glad.h>
-#include "Mesh.h"
+#include "scene/Mesh.h"
 
 class Cube : public Mesh
 {

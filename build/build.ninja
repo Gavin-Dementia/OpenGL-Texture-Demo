@@ -47,76 +47,69 @@ build cmake_object_order_depends_target_main: phony || .
 build CMakeFiles/main.dir/src/main.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/main.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\main.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src
 
-build CMakeFiles/main.dir/src/Camera.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/Camera.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\Camera.cpp.obj.d
+build CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/backend/RendererGPU.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\backend\RendererGPU.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\backend
 
-build CMakeFiles/main.dir/src/core/Renderer.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/core/Renderer.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\core\Renderer.cpp.obj.d
+build CMakeFiles/main.dir/src/gpu/scene/GPUScene.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/scene/GPUScene.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\scene\GPUScene.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\core
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\scene
 
-build CMakeFiles/main.dir/src/core/RendererCPU.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/core/RendererCPU.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\core\RendererCPU.cpp.obj.d
+build CMakeFiles/main.dir/src/gpu/buffers/SSBO.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/buffers/SSBO.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\buffers\SSBO.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\core
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\buffers
 
-build CMakeFiles/main.dir/src/core/RendererGPU.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/core/RendererGPU.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\core\RendererGPU.cpp.obj.d
+build CMakeFiles/main.dir/src/gpu/visibility/VisibilitySystem.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/visibility/VisibilitySystem.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\visibility\VisibilitySystem.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\core
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\visibility
+
+build CMakeFiles/main.dir/src/graphics/Camera.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/graphics/Camera.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\graphics\Camera.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\graphics
 
 build CMakeFiles/main.dir/src/graphics/Shader.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/graphics/Shader.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\graphics\Shader.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\graphics
 
 build CMakeFiles/main.dir/src/graphics/Texture.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/graphics/Texture.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\graphics\Texture.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\graphics
 
-build CMakeFiles/main.dir/src/objects/Cube.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/objects/Cube.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\objects\Cube.cpp.obj.d
+build CMakeFiles/main.dir/src/scene/Mesh.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/scene/Mesh.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\scene\Mesh.cpp.obj.d
   FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
-  OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\objects
-
-build CMakeFiles/main.dir/src/objects/Mesh.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/objects/Mesh.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\objects\Mesh.cpp.obj.d
-  FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
-  OBJECT_DIR = CMakeFiles\main.dir
-  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\objects
-
-build CMakeFiles/main.dir/src/scene/Scene.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/scene/Scene.cpp || cmake_object_order_depends_target_main
-  DEP_FILE = CMakeFiles\main.dir\src\scene\Scene.cpp.obj.d
-  FLAGS = -std=gnu++17
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\scene
 
 build CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj: C_COMPILER__main_unscanned_ C$:/openGL/glad/src/glad.c || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\C_\openGL\glad\src\glad.c.obj.d
-  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\C_\openGL\glad\src
 
@@ -128,7 +121,7 @@ build CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj: C_COMPILER__main_unscan
 #############################################
 # Link the executable C:\3Dproject\bin\main.exe
 
-build C$:/3Dproject/bin/main.exe: CXX_EXECUTABLE_LINKER__main_ CMakeFiles/main.dir/src/main.cpp.obj CMakeFiles/main.dir/src/Camera.cpp.obj CMakeFiles/main.dir/src/core/Renderer.cpp.obj CMakeFiles/main.dir/src/core/RendererCPU.cpp.obj CMakeFiles/main.dir/src/core/RendererGPU.cpp.obj CMakeFiles/main.dir/src/graphics/Shader.cpp.obj CMakeFiles/main.dir/src/graphics/Texture.cpp.obj CMakeFiles/main.dir/src/objects/Cube.cpp.obj CMakeFiles/main.dir/src/objects/Mesh.cpp.obj CMakeFiles/main.dir/src/scene/Scene.cpp.obj CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj
+build C$:/3Dproject/bin/main.exe: CXX_EXECUTABLE_LINKER__main_ CMakeFiles/main.dir/src/main.cpp.obj CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj CMakeFiles/main.dir/src/gpu/scene/GPUScene.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/SSBO.cpp.obj CMakeFiles/main.dir/src/gpu/visibility/VisibilitySystem.cpp.obj CMakeFiles/main.dir/src/graphics/Camera.cpp.obj CMakeFiles/main.dir/src/graphics/Shader.cpp.obj CMakeFiles/main.dir/src/graphics/Texture.cpp.obj CMakeFiles/main.dir/src/scene/Mesh.cpp.obj CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj
   LINK_LIBRARIES = -lglfw3  -lopengl32  -lgdi32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   LINK_PATH = -LC:/openGL/glfw-3.4.bin.WIN64/lib-mingw-w64
   OBJECT_DIR = CMakeFiles\main.dir

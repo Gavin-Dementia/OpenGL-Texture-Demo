@@ -1,6 +1,3 @@
-#include <iostream>
-#include <cmath> 
-
 #define GL_STATIC
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -9,25 +6,37 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Shader.h"
-#include "Camera.h"
-#include "Texture.h"
-#include "Material.h"
-#include "Cube.h"
-#include "Scene.h"
-#include "Renderer.h"
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+#include <iostream>
+
+#include "core/Logger.h"
+#include "core/ShaderLoader.h"
+#include "graphics/Camera.h"
+#include "graphics/Shader.h"
+
+#include "scene/Scene.h"
+#include "gpu/scene/GPUScene.h"
+#include "gpu/visibility/VisibilitySystem.h"
+#include "gpu/backend/RendererGPU.h"
 //"stb_image.h" first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
 
-#define width_ 1260
-#define height_ 1080
+// =======================
+// window
+#define WIDTH 1280
+#define HEIGHT 720
+
+Camera camera(glm::vec3(0.0f, 0.0f, 6.0f),
+              glm::vec3(0.0f, 1.0f, 0.0f),
+              0.0f, -90.0f);
+
+float lastX = WIDTH / 2.0f;
+float lastY = HEIGHT / 2.0f;
+bool firstMouse = true;
 // =======================
 // Camera
 // =======================
-float lastX = 400, lastY = 300;
-bool firstMouse = true;
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
-              glm::vec3(0.0f, 1.0f, 0.0f), 
-              0.0f, -90.0f);
 unsigned int indices[] = {
     0, 1, 2,
     2, 3, 0
@@ -64,358 +73,148 @@ void processInput(GLFWwindow* window, float deltaTime)
         camera.ProcessKeyboard(3, deltaTime);
 }
 
-void buildScene(Scene& scene, Cube& cube)
+
+float cubeVertices[] =
 {
-    RenderGroup group;
-    group.mesh = &cube;
-    group.models.reserve(9);
+    // positions
+    -0.5f,-0.5f,-0.5f,
+     0.5f,-0.5f,-0.5f,
+     0.5f, 0.5f,-0.5f,
+    -0.5f, 0.5f,-0.5f,
 
-    float spacing = 2.5f;
+    -0.5f,-0.5f, 0.5f,
+     0.5f,-0.5f, 0.5f,
+     0.5f, 0.5f, 0.5f,
+    -0.5f, 0.5f, 0.5f
+};
 
-    for (int r = 0; r < 3; r++)
-    {
-        for (int c = 0; c < 3; c++)
-        {
-            glm::mat4 model(1.0f);
-            model = glm::translate(
-                model,
-                glm::vec3(
-                    (c - 1.5f) * spacing,
-                    0.0f,
-                    (1.5f - r) * spacing
-                )
-            );
+unsigned int cubeIndices[] =
+{
+    0,1,2, 2,3,0,
+    4,5,6, 6,7,4,
+    0,4,7, 7,3,0,
+    1,5,6, 6,2,1,
+    3,2,6, 6,7,3,
+    0,1,5, 5,4,0
+};
 
-            group.models.push_back(model);
-        }
-    }
+// int main()
+// {
+//     glfwInit();
 
-    scene.renderGroups.push_back(group);
-    // =======================
-    // Lights
-    // =======================
+//     GLFWwindow* window =
+//         glfwCreateWindow(800, 600, "test", nullptr, nullptr);
 
-    // Directional Light
-    scene.lights.dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
-    scene.lights.dirLight.ambient   = glm::vec3(0.05f);
-    scene.lights.dirLight.diffuse   = glm::vec3(0.4f);
-    scene.lights.dirLight.specular  = glm::vec3(0.5f);
-    // populate GPU cache (std140 vec4 fields)
-    scene.lights.dirLightGPU.direction = glm::vec4(scene.lights.dirLight.direction, 0.0f);
-    scene.lights.dirLightGPU.ambient   = glm::vec4(scene.lights.dirLight.ambient, 0.0f);
-    scene.lights.dirLightGPU.diffuse   = glm::vec4(scene.lights.dirLight.diffuse, 0.0f);
-    scene.lights.dirLightGPU.specular  = glm::vec4(scene.lights.dirLight.specular, 0.0f);
-    std::cout << "[buildScene] dirLight set to: "
-              << scene.lights.dirLight.direction.x << ", "
-              << scene.lights.dirLight.direction.y << ", "
-              << scene.lights.dirLight.direction.z << std::endl;
-    // =======================
-    // SpotLight (initial values)
-    scene.lights.spotLight.position = camera.Position;
-    scene.lights.spotLight.direction = glm::normalize(camera.Forward);
-    scene.lights.spotLight.cutOff = glm::cos(glm::radians(12.5f));
-    scene.lights.spotLight.outerCutOff = glm::cos(glm::radians(17.5f));
-    scene.lights.spotLight.constant = 1.0f;
-    scene.lights.spotLight.linear = 0.09f;
-    scene.lights.spotLight.quadratic = 0.032f;
-    scene.lights.spotLight.ambient = glm::vec3(0.05f);
-    scene.lights.spotLight.diffuse = glm::vec3(1.0f);
-    scene.lights.spotLight.specular = glm::vec3(1.0f);
-    std::cout << "[buildScene] spotLight pos: "
-              << scene.lights.spotLight.position.x << ", "
-              << scene.lights.spotLight.position.y << ", "
-              << scene.lights.spotLight.position.z << std::endl;
+//     glfwMakeContextCurrent(window);
+//     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-    // Point lights
-    std::vector<glm::vec3> lightPositions =
-    {
-        { 0.7f,  0.2f,  2.0f },
-        { 2.3f, -3.3f, -4.0f }
-    };
+//     std::cout << "GL OK\n";
 
-    for (auto& pos : lightPositions)
-    {
-        scene.lights.pointLights.push_back({
-            pos,
-            1.0f, 0.09f, 0.032f,
-            glm::vec3(0.05f),
-            glm::vec3(0.8f),
-            glm::vec3(1.0f)
-        });
-
-        // light debug visuals (still non-instanced)
-        Object obj;
-        obj.mesh = &cube;
-
-        obj.position = pos; 
-        obj.scale = glm::vec3(0.2f); 
-
-        obj.isEmissive = true;
-        obj.emissiveColor = glm::vec3(1.0f);
-
-        scene.lightVisuals.push_back(obj);
-    }
-
-    // mark lights dirty so first upload initializes UBOs
-    scene.lights.dirDirty = true;
-    scene.lights.spotDirty = true;
-    scene.lights.pointLightDirty.resize(scene.lights.pointLights.size(), 1);
-}
-
-#if 0
-int main()
-{// Initialize GLFW
-    // ---------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        
-    // Create GLFW window
-    // ---------------------------
-    GLFWwindow* window = glfwCreateWindow(width_, height_, "Learn OpenGL", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    
-    // Load OpenGL function pointers with GLAD
-    // ---------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-    
-    glViewport(0, 0, width_, height_);    
-    glEnable(GL_DEPTH_TEST);// Enable depth testing
-    // stbi_set_flip_vertically_on_load(true);
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // Input callbacks
-    // ---------------------------
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window,  scroll_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // 隱藏滑鼠
-
-    // =======================
-    // Shader / Texture
-    // =======================
-    Shader shader("C:/3Dproject/shaders/basic.vert",
-                  "C:/3Dproject/shaders/basic.frag");
-    Shader lightShader("C:/3Dproject/shaders/light.vert",
-                       "C:/3Dproject/shaders/light.frag");
-    Shader depthShader("C:/3Dproject/shaders/depth.vert",
-                       "C:/3Dproject/shaders/depth.frag");
-    // Bind uniform blocks to binding points (std140 UBOs)
-    // Camera -> binding 0, DirLightBlock -> binding 1
-    {
-        GLint idx = glGetUniformBlockIndex(shader.ID, "Camera");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 0);
-        idx = glGetUniformBlockIndex(shader.ID, "DirLightBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 1);
-        idx = glGetUniformBlockIndex(shader.ID, "PointLightsBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 2);
-        idx = glGetUniformBlockIndex(shader.ID, "SpotLightBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(shader.ID, idx, 3);
-
-        idx = glGetUniformBlockIndex(lightShader.ID, "Camera");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 0);
-        idx = glGetUniformBlockIndex(lightShader.ID, "DirLightBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 1);
-        idx = glGetUniformBlockIndex(lightShader.ID, "PointLightsBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 2);
-        idx = glGetUniformBlockIndex(lightShader.ID, "SpotLightBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(lightShader.ID, idx, 3);
-    }
-    Texture diffuseTex("C:/3Dproject/box.png");
-    Texture specularTex("C:/3Dproject/box_specular.png");
-
-    // =======================
-    // Scene / Renderer
-    // =======================
-    Scene scene;
-    Renderer renderer;
-    Cube cube;
-    // =======================
-    // Build Scene
-    // =======================
-    buildScene(scene, cube);
-    // assign a default material to the first render group (example)
-    Material* defaultMat = new Material(&diffuseTex, &specularTex, 128.0f);
-    if (!scene.renderGroups.empty())
-        scene.renderGroups[0].material = defaultMat;
-    // Initialize renderer (create UBOs, bind ranges)
-    renderer.init();
-    // =======================
-    // Timing
-    // =======================
-    float lastFrame = 0.0f;
-
-    // =======================
-    // Render Loop
-    // =======================
-    while (!glfwWindowShouldClose(window))
-    {
-        float current = glfwGetTime();
-        float dt = current - lastFrame;
-        lastFrame = current;
-
-        processInput(window, dt);
-        // scene.update(dt);//anime
-
-        shader.use();
-        shader.setInt("material.diffuse", 0);
-        shader.setInt("material.specular", 1);
-        shader.setFloat("material.shininess", 128.0f);
-
-        diffuseTex.bind(0);
-        specularTex.bind(1);
-
-        renderer.render(scene, shader, lightShader, depthShader, camera, width_, height_);
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-
-    glfwTerminate();
-    return 0;
-}
-
-#endif
-
+//     while (!glfwWindowShouldClose(window))
+//     {
+//         glClear(GL_COLOR_BUFFER_BIT);
+//         glfwSwapBuffers(window);
+//         glfwPollEvents();
+//     }
+// }
 
 #if 1
 int main()
 {
-    // GLFW Init
+    Logger::init();
+    Logger::info("App start");
+
+    // =======================
+    // GLFW init
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // compute shader 需要
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(width_, height_, "Renderer", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "GPU Driven", nullptr, nullptr);
     if (!window)
     {
-        std::cout << "Failed to create window\n";
-        glfwTerminate();
+        std::cout << "Failed window\n";
         return -1;
     }
 
     glfwMakeContextCurrent(window);
 
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // =======================
     // GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to init GLAD\n";
+        std::cout << "GLAD failed\n";
         return -1;
     }
 
-    glViewport(0, 0, width_, height_);
+    std::cout << "GL: " << glGetString(GL_VERSION) << std::endl;
+
     glEnable(GL_DEPTH_TEST);
 
-    // Input
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Shaders
-    Shader shader("C:/3Dproject/shaders/basic.vert",
-                  "C:/3Dproject/shaders/basic.frag");
-
-    Shader lightShader("C:/3Dproject/shaders/light.vert",
-                       "C:/3Dproject/shaders/light.frag");
-
-    Shader depthShader("C:/3Dproject/shaders/depth.vert",
-                       "C:/3Dproject/shaders/depth.frag");
-
-    // GPU pipeline
-    Shader computeShader("C:/3Dproject/shaders/cull_and_build_indirect.comp");
-
-    // UBO Binding
-    auto bindUBO = [](Shader& s)
-    {
-        GLint idx;
-
-        idx = glGetUniformBlockIndex(s.ID, "Camera");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 0);
-
-        idx = glGetUniformBlockIndex(s.ID, "DirLightBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 1);
-
-        idx = glGetUniformBlockIndex(s.ID, "PointLightsBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 2);
-
-        idx = glGetUniformBlockIndex(s.ID, "SpotLightBlock");
-        if (idx != GL_INVALID_INDEX) glUniformBlockBinding(s.ID, idx, 3);
-    };
-
-    bindUBO(shader);
-    bindUBO(lightShader);
-
-    // Textures
-    Texture diffuseTex("C:/3Dproject/box.png");
-    Texture specularTex("C:/3Dproject/box_specular.png");
-
-    // Scene / Renderer
+    // =======================
+    // Scene (CPU side empty for now)
     Scene scene;
-    Renderer renderer;
-    Cube cube;
 
-    buildScene(scene, cube);
+    // =======================
+    // GPU systems
+    GPUScene gpuScene;
+    VisibilitySystem visibility;
+    RendererGPU renderer;
 
-    Material* defaultMat = new Material(&diffuseTex, &specularTex, 128.0f);
-    if (!scene.renderGroups.empty())
-        scene.renderGroups[0].material = defaultMat;
+    // ⚠️ 重要：避免 crash
+    // 不在 constructor 做 shader 初始化
+    renderer.init();
 
-    // renderer.init();
-    renderer.init_GPU();
+    // =======================
+    // Shader (standalone test only)
+    std::cout << "A: before shader\n";
+    Shader basicShader = ShaderLoader::load("basic.vert", "basic.frag");
+    std::cout << "B: after shader\n";
+    basicShader.use();
 
-    // Timing
-    float lastFrame = 0.0f;
-
-    // Render Loop
+    // =======================
+    // MAIN LOOP
     while (!glfwWindowShouldClose(window))
     {
-        float current = glfwGetTime();
-        float dt = current - lastFrame;
-        lastFrame = current;
+        float dt = 0.016f;
 
         processInput(window, dt);
 
-        // Bind textures
-        shader.use();
-        shader.setInt("material.diffuse", 0);
-        shader.setInt("material.specular", 1);
-        shader.setFloat("material.shininess", 128.0f);
+        glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        diffuseTex.bind(0);
-        specularTex.bind(1);
+        float aspect = (float)WIDTH / (float)HEIGHT;
 
-        // Render
-        renderer.render(
-            scene,
-            shader,
-            lightShader,
-            depthShader,
-            computeShader,
-            camera,
-            width_,
-            height_
-        );
+        // gpuScene.upload(scene);
+        // gpuScene.updateCamera(camera, aspect);
+        // visibility.runCullCompute(...);
+
+        // =====================================================
+        // SAFE RENDER PATH
+        basicShader.use();
+
+        // dummy draw
+        glBegin(GL_TRIANGLES);
+        glVertex3f(-0.5f, -0.5f, 0.0f);
+        glVertex3f( 0.5f, -0.5f, 0.0f);
+        glVertex3f( 0.0f,  0.5f, 0.0f);
+        glEnd();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     glfwTerminate();
+    Logger::info("shutdown");
+    Logger::shutdown();
     return 0;
 }
 #endif
-
 
