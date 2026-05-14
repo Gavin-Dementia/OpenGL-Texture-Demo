@@ -13,11 +13,9 @@ public:
 
     void init();
 
-    void render(
-        GPUScene& scene,
+    void render(GPUScene& scene,
         VisibilitySystem& visibility,
-        GLuint vao,
-        int drawCount);
+        GLuint vao);
 
     void setDebugDraw(bool enable) { debugDraw = enable; }
 

@@ -30,10 +30,11 @@ public:
     // bind all SSBOs
     void bindAll() const;
 
-    SSBO& getMeshBuffer() { return meshBuffer; }
-    SSBO& getMaterialBuffer() { return materialBuffer; }
-    SSBO& getTransformBuffer() { return transformBuffer; }
-    SSBO& getInstanceBuffer() { return instanceBuffer; }
+    const SSBO& getMeshBuffer() const { return meshBuffer; }
+    const SSBO& getMaterialBuffer() const { return materialBuffer; }
+    const SSBO& getTransformBuffer() const { return transformBuffer; }
+    const SSBO& getInstanceBuffer() const { return instanceBuffer; }
+    GLuint getCameraUBO() const { return cameraUBO; }
 
     GLuint getGlobalVAO() const { return 0; }
 

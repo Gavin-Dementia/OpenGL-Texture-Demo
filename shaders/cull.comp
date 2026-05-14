@@ -2,6 +2,15 @@
 
 layout(local_size_x = 64) in;
 
+struct DrawElementsIndirectCommand
+{
+    uint count;
+    uint instanceCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
+};
+
 struct Instance
 {
     uint transformID;
@@ -11,34 +20,26 @@ struct Instance
 };
 
 layout(std430, binding = 0) buffer Instances
-{
-    Instance instances[];
-};
+{    Instance instances[];    };
 
 layout(std430, binding = 1) buffer Transforms
-{
-    mat4 transforms[];
-};
+{    mat4 transforms[];    };
 
 layout(std430, binding = 2) buffer Meshes
-{
-    vec4 boundingSpheres[];
-};
+{    vec4 boundingSpheres[];    };
 
-layout(std430, binding = 3) buffer Visible
-{
-    Instance visibleInstances[];
-};
 
-layout(std430, binding = 4) buffer Counter
-{
-    uint drawCount;
-};
+layout(std430, binding = 5) buffer Indirect
+{    DrawElementsIndirectCommand commands[];    };
+
+layout(std430, binding = 6) buffer Counter
+{    uint drawCount;    }counter;
 
 layout(std430, binding = 7) buffer DebugBuffer
-{
-    vec4 debugColor[]; // per instance
-};
+{    vec4 debugColor[];     };// per instance
+
+layout(std430, binding = 8) buffer Visible
+{    Instance visibleInstances[];    };
 
 uniform mat4 viewProj;
 
@@ -59,6 +60,7 @@ bool sphereInFrustum(vec4 sphere, mat4 mvp)
             clip.z > -w - sphere.w &&
             clip.z <  w + sphere.w);
 }
+
 #if 0
 void main()
 {
@@ -91,8 +93,7 @@ void main()
 }
 #endif
 
-
-#if 1
+#if 0
 void main()
 {
     uint id = gl_GlobalInvocationID.x;
@@ -108,3 +109,18 @@ void main()
 }
 #endif
 
+#if 1
+void main()
+{
+    uint id = gl_GlobalInvocationID.x;
+
+    if (id == 0)
+        counter.drawCount = 9;
+
+    commands[id].count = 36;
+    commands[id].instanceCount = 1;
+    commands[id].firstIndex = 0;
+    commands[id].baseVertex = 0;
+    commands[id].baseInstance = id;
+}
+#endif

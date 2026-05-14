@@ -26,6 +26,7 @@ set(SRC_FILES
 
     # scene
     src/scene/Mesh.cpp
+    src/scene/MeshFactory.cpp
 )
 
 # =========================

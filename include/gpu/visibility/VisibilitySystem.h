@@ -14,26 +14,26 @@ public:
     void init();
 
     void dispatchCulling(
-        GLuint instanceBuffer,
-        GLuint transformBuffer,
-        GLuint meshBuffer,
-        GLuint cameraUBO,
+        GPUScene& gpuScene,
         int instanceCount);
 
     void bindBuffers() const;
+    void bindInputs(const GPUScene& scene);
+    void bindOutputs() const;
 
-    GLuint getIndirectBuffer() const { return indirectBuffer.getID(); }
+    GLuint getIndirectBuffer() const { return indirectCommandBuffer.getID(); }
     GLuint getVisibleBuffer() const { return visibleInstanceBuffer.getID(); }
+    GLuint getCounterBuffer() const { return counterBuffer.getID(); }
 
     void runCullCompute(GPUScene&, Shader&) {}
-int getDrawCount() const { return 0; }
+    int getDrawCount() const { return 0; }
 private:
 
+    SSBO indirectCommandBuffer;
     SSBO visibleInstanceBuffer;
-    SSBO indirectBuffer;
     SSBO counterBuffer;
 
-    GLuint computeProgram = 0;
+    Shader computeProgram;
 };
 
 #endif // VISIBILITY_SYSTEM_H

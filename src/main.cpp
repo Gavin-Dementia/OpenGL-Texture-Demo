@@ -15,6 +15,7 @@
 #include "core/ShaderLoader.h"
 #include "graphics/Camera.h"
 #include "graphics/Shader.h"
+#include "scene/MeshFactory.h"
 
 #include "scene/Scene.h"
 #include "gpu/scene/GPUScene.h"
@@ -74,53 +75,19 @@ void processInput(GLFWwindow* window, float deltaTime)
 }
 
 
-float cubeVertices[] =
-{
-    // positions
-    -0.5f,-0.5f,-0.5f,
-     0.5f,-0.5f,-0.5f,
-     0.5f, 0.5f,-0.5f,
-    -0.5f, 0.5f,-0.5f,
-
-    -0.5f,-0.5f, 0.5f,
-     0.5f,-0.5f, 0.5f,
-     0.5f, 0.5f, 0.5f,
-    -0.5f, 0.5f, 0.5f
-};
-
-unsigned int cubeIndices[] =
-{
-    0,1,2, 2,3,0,
-    4,5,6, 6,7,4,
-    0,4,7, 7,3,0,
-    1,5,6, 6,2,1,
-    3,2,6, 6,7,3,
-    0,1,5, 5,4,0
-};
-
-// int main()
-// {
-//     glfwInit();
-
-//     GLFWwindow* window =
-//         glfwCreateWindow(800, 600, "test", nullptr, nullptr);
-
-//     glfwMakeContextCurrent(window);
-//     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-
-//     std::cout << "GL OK\n";
-
-//     while (!glfwWindowShouldClose(window))
-//     {
-//         glClear(GL_COLOR_BUFFER_BIT);
-//         glfwSwapBuffers(window);
-//         glfwPollEvents();
-//     }
-// }
-
-#if 1
+#if 0
 int main()
 {
+// 0  Meshes
+// 1  Materials
+// 2  Transforms
+// 3  Instances (render)
+// 4  DirLight
+// 5  IndirectCommands
+// 6  Counter
+// 7  Debug
+// 8  VisibleInstances (compute only)
+
     Logger::init();
     Logger::info("App start");
 
@@ -168,6 +135,10 @@ int main()
     VisibilitySystem visibility;
     RendererGPU renderer;
 
+    // =======================
+    // Mesh
+    Mesh cube = MeshFactory::createCube();
+
     // ⚠️ 重要：避免 crash
     // 不在 constructor 做 shader 初始化
     renderer.init();
@@ -184,7 +155,6 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         float dt = 0.016f;
-
         processInput(window, dt);
 
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
@@ -192,20 +162,23 @@ int main()
 
         float aspect = (float)WIDTH / (float)HEIGHT;
 
-        // gpuScene.upload(scene);
-        // gpuScene.updateCamera(camera, aspect);
-        // visibility.runCullCompute(...);
+        // =========================
+        // CAMERA → GPU UBO
+        gpuScene.updateCamera(camera, aspect);
 
-        // =====================================================
-        // SAFE RENDER PATH
-        basicShader.use();
+        // =========================
+        // VISIBILITY (IMPORTANT)
+        visibility.dispatchCulling(
+            gpuScene.getInstanceBuffer().getID(),
+            gpuScene.getTransformBuffer().getID(),
+            gpuScene.getMeshBuffer().getID(),
+            gpuScene.getCameraUBO().getID(), // ❗ we fix this below
+            1 // temporary instanceCount
+        );
 
-        // dummy draw
-        glBegin(GL_TRIANGLES);
-        glVertex3f(-0.5f, -0.5f, 0.0f);
-        glVertex3f( 0.5f, -0.5f, 0.0f);
-        glVertex3f( 0.0f,  0.5f, 0.0f);
-        glEnd();
+        // =========================
+        // RENDER PASS
+        renderer.render(gpuScene, visibility);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -214,6 +187,159 @@ int main()
     glfwTerminate();
     Logger::info("shutdown");
     Logger::shutdown();
+    return 0;
+}
+#endif
+
+#if 1
+int main()
+{
+    Logger::init();
+    Logger::info("App start");
+
+    // =======================
+    // GLFW init
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "GPU Driven", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "GLAD failed\n";
+        return -1;
+    }
+
+    glEnable(GL_DEPTH_TEST);
+
+    // =======================
+    // GPU SYSTEMS
+    GPUScene gpuScene;
+    VisibilitySystem visibility;
+    RendererGPU renderer;
+
+    gpuScene.init();
+    visibility.init();
+    renderer.init();
+
+    // =======================
+    // MESH
+    Mesh cube = MeshFactory::createCube();
+
+    // =======================
+    // VAO setup (IMPORTANT)
+    GLuint vao, vbo, ebo;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER,
+                 cube.vertices.size() * sizeof(Vertex),
+                 cube.vertices.data(),
+                 GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 cube.indices.size() * sizeof(uint32_t),
+                 cube.indices.data(),
+                 GL_STATIC_DRAW);
+
+    // position
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    // normal
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void*)offsetof(Vertex, normal));
+
+    // uv
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void*)offsetof(Vertex, texCoord));
+
+    glBindVertexArray(0);
+
+    // =======================
+    // GPU MESH UPLOAD
+    GPUMesh gpuMesh{};
+    gpuMesh.vertexOffset = 0;
+    gpuMesh.indexOffset = 0;
+    gpuMesh.vertexCount = cube.vertices.size();
+    gpuMesh.indexCount = cube.indices.size();
+
+    gpuScene.uploadMeshes({ gpuMesh });
+
+    // =======================
+    // INSTANCE
+    GPUInstance inst{};
+    inst.transformID = 0;
+    inst.meshID = 0;
+    inst.materialID = 0;
+    inst.visibilityID = 0;
+
+    gpuScene.uploadInstances({ inst });
+
+    // =======================
+    // TRANSFORM
+    GPUTransform t{};
+    t.model = glm::mat4(1.0f);
+
+    gpuScene.uploadTransforms({ t });
+
+    // =======================
+    // CAMERA SHADER TEST
+    Shader basicShader = ShaderLoader::load("basic.vert", "basic.frag");
+    // =======================
+    // MAIN LOOP
+    while (!glfwWindowShouldClose(window))
+    {
+        processInput(window, 0.016f);
+
+        glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        float aspect = (float)WIDTH / (float)HEIGHT;
+
+        // camera → GPU
+        gpuScene.updateCamera(camera, aspect);
+
+        // =======================
+        // GPU PIPELINE
+        visibility.dispatchCulling(gpuScene, 1);
+
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glFinish();
+
+        GLuint v = 0;
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER,
+                    visibility.getCounterBuffer());
+
+        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER,
+                            0,
+                            sizeof(GLuint),
+                            &v);
+
+        std::cout << "CPU read = " << v << std::endl;
+
+        renderer.render(gpuScene, visibility, vao);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
     return 0;
 }
 #endif

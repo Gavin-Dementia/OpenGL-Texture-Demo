@@ -11,20 +11,14 @@ struct Instance {
     uint visibilityID;
 };
 
-layout(std430, binding = 3) buffer Instances
-{
-    Instance instances[];
-};
-
 layout(std430, binding = 2) buffer Transforms
-{
-    mat4 transforms[];
-};
+{    mat4 transforms[];    };
+
+layout(std430, binding = 3) buffer Instances
+{    Instance instances[];    };
 
 layout(std430, binding = 7) buffer DebugBuffer
-{
-    vec4 debugColor[];
-};
+{    vec4 debugColor[];    };
 
 out vec3 FragPos;
 out vec3 Normal;

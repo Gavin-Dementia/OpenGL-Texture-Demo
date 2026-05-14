@@ -1,20 +1,34 @@
 #include "gpu/visibility/VisibilitySystem.h"
+#include "gpu/visibility/IndirectDraw.h"
+#include "C:/3Dproject/src/core/ShaderLoader.h"
 
 #include <iostream>
 
 void VisibilitySystem::init()
 {
-    // visible instances (output of culling)
-    visibleInstanceBuffer.create(1024 * 1024, 4);
-
-    // indirect draw commands
-    indirectBuffer.create(1024 * 1024, 5);
-
+    // indirect draw commands (input for renderer)
+    indirectCommandBuffer.create(
+        1024 * sizeof(DrawElementsIndirectCommand),
+        5
+    );
+    
     // atomic counter (how many visible)
     counterBuffer.create(sizeof(GLuint), 6);
 
+    // visible instances (output of culling)
+    visibleInstanceBuffer.create(1024 * 1024, 8);
+
     GLuint zero = 0;
     counterBuffer.upload(&zero, sizeof(GLuint));
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     5, indirectCommandBuffer.getID());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 
+                     6, counterBuffer.getID());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     8, visibleInstanceBuffer.getID());
+
+    computeProgram = ShaderLoader::loadCompute("cull.comp");
 }
 
 void VisibilitySystem::bindBuffers() const
@@ -24,26 +38,36 @@ void VisibilitySystem::bindBuffers() const
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(unsigned int), &zero);
 }
 
+void VisibilitySystem::bindInputs(const GPUScene& scene)
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
+                     scene.getInstanceBuffer().getID());
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+                     scene.getTransformBuffer().getID());
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
+                     scene.getMeshBuffer().getID());
+
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, scene.getCameraUBO());
+}
+
+void VisibilitySystem::bindOutputs() const
+{
+    indirectCommandBuffer.bindBase();
+    visibleInstanceBuffer.bindBase();
+    counterBuffer.bindBase();
+}
+
 void VisibilitySystem::dispatchCulling(
-    GLuint instanceBuffer,
-    GLuint transformBuffer,
-    GLuint meshBuffer,
-    GLuint cameraUBO,
+    GPUScene& gpuScene,
     int instanceCount)
 {
-    glUseProgram(computeProgram);
-
-    // bind input
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, instanceBuffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, transformBuffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, meshBuffer);
-
-    // output
-    visibleInstanceBuffer.bindBase();
-    indirectBuffer.bindBase();
-    counterBuffer.bindBase();
-
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);
+    std::cout << "dispatch start\n";
+    // glUseProgram(computeProgram);
+    computeProgram.use();
+    bindInputs(gpuScene);
+    bindOutputs();
 
     // reset counter
     GLuint zero = 0;

@@ -57,24 +57,18 @@ struct PointLightGPU
 // SSBO bindings
 
 layout(std430, binding = 1) buffer Materials
-{
-    Material materials[];
-};
+{    Material materials[];    };
+
 layout(std430, binding = 3) buffer Instances
-{
-    Instance instances[];
-};
+{    Instance instances[];    };
+
 #define NR_POINT_LIGHTS 16
 
 layout(std430, binding = 4) buffer DirLightBuffer
-{
-    DirLightGPU dirLight;
-};
+{    DirLightGPU dirLight;    };
 
 layout(std430, binding =5) buffer PointLights
-{
-    PointLightGPU pointLights[];
-};
+{    PointLightGPU pointLights[];    };
 
 // =========================
 // Textures (global bindless-style array)
@@ -202,7 +196,8 @@ void main()
     // Emissive
     result += mat.emissiveColor.xyz;
 
-    FragColor = vec4(result, 1.0);
+    //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    FragColor = vec4(result+0.5, 1.0);
     //FragColor = vDebugColor;
 }
 
