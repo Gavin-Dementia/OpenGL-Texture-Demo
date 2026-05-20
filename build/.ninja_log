@@ -56,3 +56,15 @@
 1391	1635	8004496925400242	C:/3Dproject/bin/main.exe	bbf4b77f9cad98b0
 22	1326	8004503637827508	CMakeFiles/main.dir/src/gpu/visibility/VisibilitySystem.cpp.obj	ba934916791623d4
 1326	1575	8004503650871155	C:/3Dproject/bin/main.exe	bbf4b77f9cad98b0
+21	4244	8009902720703508	CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj	f07104c83cca9b98
+26	4259	8009902720765494	CMakeFiles/main.dir/src/gpu/visibility/VisibilitySystem.cpp.obj	ba934916791623d4
+11	4384	8009902720611922	CMakeFiles/main.dir/src/main.cpp.obj	b77e411d547af008
+4385	5048	8009902764347138	C:/3Dproject/bin/main.exe	bbf4b77f9cad98b0
+30	1693	8009906015212147	CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj	f07104c83cca9b98
+36	1695	8009906015268079	CMakeFiles/main.dir/src/gpu/visibility/VisibilitySystem.cpp.obj	ba934916791623d4
+25	2009	8009906015157816	CMakeFiles/main.dir/src/main.cpp.obj	b77e411d547af008
+2009	2276	8009906035001923	C:/3Dproject/bin/main.exe	bbf4b77f9cad98b0
+29	1726	8009907227654821	CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj	f07104c83cca9b98
+35	1736	8009907227709205	CMakeFiles/main.dir/src/gpu/visibility/VisibilitySystem.cpp.obj	ba934916791623d4
+24	2040	8009907227604025	CMakeFiles/main.dir/src/main.cpp.obj	b77e411d547af008
+2041	2338	8009907247772510	C:/3Dproject/bin/main.exe	bbf4b77f9cad98b0
