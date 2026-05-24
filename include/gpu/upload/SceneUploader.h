@@ -1,28 +1,28 @@
-#ifndef GPU_SCENE_H
-#define GPU_SCENE_H
+#ifndef SCENE_UPLOADER_H
+#define SCENE_UPLOADER_H
 #include <vector>
 
 #include "gpu/buffers/SSBO.h"
-#include "gpu/scene/GPUTransform.h"
-#include "gpu/scene/GPUMesh.h"
-#include "gpu/scene/GPUMaterial.h"
-#include "gpu/scene/GPUInstance.h"
+#include "gpu/layout/GPUTransformData.h"
+#include "gpu/layout/MeshDrawData.h"
+#include "gpu/layout/GPUMaterialData.h"
+#include "gpu/layout/GPUObjectData.h"
 #include "scene/Scene.h"
 #include "graphics/Camera.h"
 
-class GPUScene
+class SceneUploader
 {
 public:
 
     void init();
 
     // static upload
-    void uploadMeshes(const std::vector<GPUMesh>& meshes);
-    void uploadMaterials(const std::vector<GPUMaterial>& materials);
+    void uploadMeshes(const std::vector<MeshDrawData>& meshes);
+    void uploadMaterials(const std::vector<GPUMaterialData>& materials);
 
     // per-frame upload
-    void uploadTransforms(const std::vector<GPUTransform>& transforms);
-    void uploadInstances(const std::vector<GPUInstance>& instances);
+    void uploadTransforms(const std::vector<GPUTransformData>& transforms);
+    void uploadInstances(const std::vector<GPUObjectData>& instances);
 
     // CAMERA (IMPORTANT)
     void updateCamera(const Camera& cam, float aspect);
@@ -55,5 +55,5 @@ private:
 };
 
 
-#endif // GPU_SCENE_H
+#endif // SCENE_UPLOADER_H
 

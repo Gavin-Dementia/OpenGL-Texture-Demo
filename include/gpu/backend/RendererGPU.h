@@ -3,8 +3,9 @@
 #include <glad/glad.h>
 #include "graphics/Shader.h"
 
-class GPUScene;
-class VisibilitySystem;
+class SceneUploader;
+// class VisibilitySystem;
+class VisibilityPipeline;
 
 class RendererGPU
 {
@@ -13,8 +14,8 @@ public:
 
     void init();
 
-    void render(GPUScene& scene,
-        VisibilitySystem& visibility,
+    void render(SceneUploader& scene,
+        VisibilityPipeline& visibility,
         GLuint vao);
 
     void setDebugDraw(bool enable) { debugDraw = enable; }
@@ -26,7 +27,7 @@ private:
 
     void drawIndirectDebug(
         GLuint vao,
-        VisibilitySystem& visibility,
+        VisibilityPipeline& visibility,
         Shader& debugShader);
 
 private:

@@ -19,14 +19,19 @@ public:
         return shaders() + name;
     }    
 
-    static std::string shaderVF(const std::string& name)
+    static std::string passShader(const std::string& name)
     {
         return shaders() + "passes/" + name;
     }    
 
-    static std::string shaderC(const std::string& name)
+    static std::string computeShader(const std::string& name)
     {
         return shaders() + "compute/" + name;
+    }
+
+    static std::string debugShader(const std::string& name)
+    {
+        return shaders() + "debug/" + name;
     }
 };
 

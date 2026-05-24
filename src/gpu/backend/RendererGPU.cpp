@@ -1,6 +1,6 @@
 #include "gpu/backend/RendererGPU.h"
-#include "gpu/scene/GPUScene.h"
-#include "gpu/visibility/VisibilitySystem.h"
+#include "gpu/upload/SceneUploader.h"
+#include "gpu/pipeline/VisibilityPipeline.h"
 #include "graphics/Shader.h"
 #include "core/ShaderLoader.h"
 
@@ -9,16 +9,16 @@
 
 void RendererGPU::init()
 {
-    normalShader = ShaderLoader::load("basic.vert", "basic.frag");
+    normalShader = ShaderLoader::loadPass("basic.vert", "basic.frag");
 
-    debugShader = ShaderLoader::load("indirect_debug.vert", "indirect_debug.frag");
+    debugShader = ShaderLoader::loadDebug("indirect_debug.vert", "indirect_debug.frag");
 
     std::cout << "RendererGPU init\n";
 }
 
 void RendererGPU::render(
-    GPUScene& scene,
-    VisibilitySystem& visibility,
+    SceneUploader& scene,
+    VisibilityPipeline& visibility,
     GLuint vao)
 {
     std::cout << "RendererGPU render\n";
@@ -98,7 +98,7 @@ void RendererGPU::drawIndirect(
 
 void RendererGPU::drawIndirectDebug(
     GLuint vao,
-    VisibilitySystem& visibility,
+    VisibilityPipeline& visibility,
     Shader& debugShader)
 {
     debugShader.use();

@@ -11,13 +11,16 @@ set(SRC_FILES
 
     # GPU pipeline
     src/gpu/backend/RendererGPU.cpp
-    src/gpu/scene/GPUScene.cpp
+    src/gpu/upload/SceneUploader.cpp
 
     # buffers
+    src/gpu/buffers/MaterialBuffer.cpp
+    src/gpu/buffers/ObjectBuffer.cpp
     src/gpu/buffers/SSBO.cpp
 
-    # visibility
-    src/gpu/visibility/VisibilitySystem.cpp
+
+    #pipeline
+    src/gpu/pipeline/VisibilityPipeline.cpp
 
     # graphics
     src/graphics/Camera.cpp

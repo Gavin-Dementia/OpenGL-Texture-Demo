@@ -18,8 +18,8 @@
 #include "scene/MeshFactory.h"
 
 #include "scene/Scene.h"
-#include "gpu/scene/GPUScene.h"
-#include "gpu/visibility/VisibilitySystem.h"
+#include "gpu/upload/SceneUploader.h"
+#include "gpu/pipeline/VisibilityPipeline.h"
 #include "gpu/backend/RendererGPU.h"
 //"stb_image.h" first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
 
@@ -222,11 +222,11 @@ int main()
 
     // =======================
     // GPU SYSTEMS
-    GPUScene gpuScene;
-    VisibilitySystem visibility;
+    SceneUploader scene;
+    VisibilityPipeline visibility;
     RendererGPU renderer;
 
-    gpuScene.init();
+    scene.init();
     visibility.init();
     renderer.init();
 
@@ -272,34 +272,34 @@ int main()
 
     // =======================
     // GPU MESH UPLOAD
-    GPUMesh gpuMesh{};
+    MeshDrawData gpuMesh{};
     gpuMesh.vertexOffset = 0;
     gpuMesh.indexOffset = 0;
     gpuMesh.vertexCount = cube.vertices.size();
     gpuMesh.indexCount = cube.indices.size();
 
-    gpuScene.uploadMeshes({ gpuMesh });
+    scene.uploadMeshes({ gpuMesh });
 
     // =======================
     // INSTANCE
-    GPUInstance inst{};
+    GPUObjectData inst{};
     inst.transformID = 0;
     inst.meshID = 0;
     inst.materialID = 0;
     inst.visibilityID = 0;
 
-    gpuScene.uploadInstances({ inst });
+    scene.uploadInstances({ inst });
 
     // =======================
     // TRANSFORM
-    GPUTransform t{};
+    GPUTransformData t{};
     t.model = glm::mat4(1.0f);
 
-    gpuScene.uploadTransforms({ t });
+    scene.uploadTransforms({ t });
 
     // =======================
     // CAMERA SHADER TEST
-    Shader basicShader = ShaderLoader::load("basic.vert", "basic.frag");
+    Shader basicShader = ShaderLoader::loadPass("basic.vert", "basic.frag");
     // =======================
     // MAIN LOOP
     while (!glfwWindowShouldClose(window))
@@ -312,11 +312,11 @@ int main()
         float aspect = (float)WIDTH / (float)HEIGHT;
 
         // camera → GPU
-        gpuScene.updateCamera(camera, aspect);
+        scene.updateCamera(camera, aspect);
 
         // =======================
         // GPU PIPELINE
-        visibility.dispatchCulling(gpuScene, 1);
+        visibility.dispatchCulling(scene, 1);
 
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
         glFinish();
@@ -333,7 +333,7 @@ int main()
 
         std::cout << "CPU read = " << v << std::endl;
 
-        renderer.render(gpuScene, visibility, vao);
+        renderer.render(scene, visibility, vao);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

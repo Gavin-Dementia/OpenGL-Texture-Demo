@@ -1,8 +1,8 @@
-#ifndef GPU_MESH_H
-#define GPU_MESH_H
+#ifndef GPU_MESH_DRAW_DATA_H
+#define GPU_MESH_DRAW_DATA_H
 #include <glm/glm.hpp>
 
-struct GPUMesh
+struct MeshDrawData
 {
     uint32_t vertexOffset;
     uint32_t indexOffset;
@@ -18,5 +18,5 @@ struct GPUMesh
     uint32_t pad1;
 };
 
-#endif // GPU_MESH_H
+#endif // GPU_MESH_DRAW_DATA_H
 

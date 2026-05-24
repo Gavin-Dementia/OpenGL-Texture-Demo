@@ -1,6 +1,6 @@
-#include "gpu/scene/GPUScene.h"
+#include "gpu/upload/SceneUploader.h"
 
-void GPUScene::init()
+void SceneUploader::init()
 {
     // binding points
     meshBuffer.create(1024 * 1024, 0);
@@ -18,31 +18,31 @@ void GPUScene::init()
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);
 }
 
-void GPUScene::uploadMeshes(const std::vector<GPUMesh>& meshes)
+void SceneUploader::uploadMeshes(const std::vector<MeshDrawData>& meshes)
 {
     meshBuffer.upload(meshes.data(),
-                       meshes.size() * sizeof(GPUMesh));
+                       meshes.size() * sizeof(MeshDrawData));
 }
 
-void GPUScene::uploadMaterials(const std::vector<GPUMaterial>& materials)
+void SceneUploader::uploadMaterials(const std::vector<GPUMaterialData>& materials)
 {
     materialBuffer.upload(materials.data(),
-                          materials.size() * sizeof(GPUMaterial));
+                          materials.size() * sizeof(GPUMaterialData));
 }
 
-void GPUScene::uploadTransforms(const std::vector<GPUTransform>& transforms)
+void SceneUploader::uploadTransforms(const std::vector<GPUTransformData>& transforms)
 {
     transformBuffer.upload(transforms.data(),
-                           transforms.size() * sizeof(GPUTransform));
+                           transforms.size() * sizeof(GPUTransformData));
 }
 
-void GPUScene::uploadInstances(const std::vector<GPUInstance>& instances)
+void SceneUploader::uploadInstances(const std::vector<GPUObjectData>& instances)
 {
     instanceBuffer.upload(instances.data(),
-                          instances.size() * sizeof(GPUInstance));
+                          instances.size() * sizeof(GPUObjectData));
 }
 
-void GPUScene::updateCamera(const Camera& cam, float aspect)
+void SceneUploader::updateCamera(const Camera& cam, float aspect)
 {
     CameraGPU data;
 
@@ -54,7 +54,7 @@ void GPUScene::updateCamera(const Camera& cam, float aspect)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CameraGPU), &data);
 }
 
-void GPUScene::bindAll() const
+void SceneUploader::bindAll() const
 {
     meshBuffer.bindBase();
     materialBuffer.bindBase();

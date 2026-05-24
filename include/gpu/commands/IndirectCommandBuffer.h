@@ -1,8 +1,8 @@
-#ifndef INDIRECT_DRAW_H
-#define INDIRECT_DRAW_H
+#ifndef INDIRECT_COMMAND_BUFFER_H
+#define INDIRECT_COMMAND_BUFFER_H
 
 
-struct DrawElementsIndirectCommand
+struct IndirectCommandBuffer
 {
     uint32_t count;
     uint32_t instanceCount;
@@ -11,5 +11,5 @@ struct DrawElementsIndirectCommand
     uint32_t baseInstance;
 };
 
-#endif // INDIRECT_DRAW_H
+#endif // INDIRECT_COMMAND_BUFFER_H
 
