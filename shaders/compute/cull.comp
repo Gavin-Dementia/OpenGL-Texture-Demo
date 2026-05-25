@@ -19,27 +19,26 @@ struct Instance
     uint visibilityID;
 };
 
-layout(std430, binding = 0) buffer Instances
-{    Instance instances[];    };
+layout(std430, binding = 0) buffer ObjectBuffer
+{    Instance objects[];   };
 
-layout(std430, binding = 1) buffer Transforms
+layout(std430, binding = 1) buffer TransformBuffer
 {    mat4 transforms[];    };
 
-layout(std430, binding = 2) buffer Meshes
+layout(std430, binding = 2) buffer MeshBuffer
 {    vec4 boundingSpheres[];    };
 
-
-layout(std430, binding = 5) buffer Indirect
+layout(std430, binding = 5) buffer DrawBuffer
 {    DrawElementsIndirectCommand commands[];    };
 
-layout(std430, binding = 6) buffer Counter
+layout(std430, binding = 6) buffer CounterBuffer
 {    uint drawCount;    }counter;
 
 layout(std430, binding = 7) buffer DebugBuffer
 {    vec4 debugColor[];     };// per instance
 
-layout(std430, binding = 8) buffer Visible
-{    Instance visibleInstances[];    };
+layout(std430, binding = 8) buffer VisibilityBuffer
+{    Instance visibleObjects[];    };
 
 uniform mat4 viewProj;
 
@@ -60,54 +59,6 @@ bool sphereInFrustum(vec4 sphere, mat4 mvp)
             clip.z > -w - sphere.w &&
             clip.z <  w + sphere.w);
 }
-
-#if 0
-void main()
-{
-    uint id = gl_GlobalInvocationID.x;
-    Instance inst = instances[id];
-
-    mat4 model = transforms[inst.transformID];
-
-    vec4 sphere = boundingSpheres[inst.meshID];
-
-    vec3 worldCenter = (model * vec4(sphere.xyz, 1.0)).xyz;
-    vec4 worldSphere = vec4(worldCenter, sphere.w);
-
-    if (sphereInFrustum(worldSphere, viewProj))
-    {
-        uint index = atomicAdd(drawCount, 1);
-        visibleInstances[index] = inst;
-
-        // ================================
-        // BUILD INDIRECT COMMAND
-        uint cmd = inst.meshID * 5;
-
-        atomicAdd(commands[cmd + 1], 1); // instanceCount++
-        debugColor[id] = vec4(0.0, 1.0, 0.0, 1.0); // GREEN = visible
-    }
-    else
-    {
-        debugColor[id] = vec4(1.0, 0.0, 0.0, 1.0); // RED = culled
-    }
-}
-#endif
-
-#if 0
-void main()
-{
-    uint id = gl_GlobalInvocationID.x;
-
-    Instance inst = instances[id];
-
-    //  bypass frustum culling
-    uint index = atomicAdd(drawCount, 1);
-    visibleInstances[index] = inst;
-
-    uint cmd = inst.meshID * 5;
-    atomicAdd(commands[cmd + 1], 1);
-}
-#endif
 
 #if 1
 void main()

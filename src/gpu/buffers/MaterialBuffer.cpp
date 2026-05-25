@@ -1,9 +1,31 @@
 #include"gpu/buffers/MaterialBuffer.h"
 #include "gpu/layout/GPUMaterialData.h"
 
-void MaterialBuffer::upload(const std::vector<GPUMaterialData>& materials)
+void MaterialBuffer::init()
 {
-    ssbo.upload(materials.data(),
-                materials.size() * sizeof(GPUMaterialData));
+    ssbo.create(
+        sizeof(GPUMaterialData),
+        GL_DYNAMIC_DRAW);
+}
+
+void MaterialBuffer::upload(
+    const std::vector<GPUMaterialData>& materials)
+{
+    if (materials.empty())
+        return;
+
+    ssbo.upload(
+        materials.data(),
+        sizeof(GPUMaterialData) * materials.size());
+}
+
+void MaterialBuffer::bind() const
+{
+    ssbo.bindBase(Binding);
+}
+
+size_t MaterialBuffer::size() const
+{
+    return ssbo.getSize() / sizeof(GPUMaterialData);
 }
 

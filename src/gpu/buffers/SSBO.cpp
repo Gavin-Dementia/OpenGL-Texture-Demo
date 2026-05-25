@@ -13,11 +13,9 @@ SSBO::~SSBO()
 
 void SSBO::create(
     size_t size,
-    GLuint bindingPoint,
     GLenum usage)
 {
     bufferSize = size;
-    binding = bindingPoint;
 
     glGenBuffers(1, &id);
 
@@ -29,12 +27,8 @@ void SSBO::create(
         nullptr,
         usage);
 
-    glBindBufferBase(
-        GL_SHADER_STORAGE_BUFFER,
-        binding,
-        id);
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 }
 
 void SSBO::upload(
@@ -53,10 +47,11 @@ void SSBO::upload(
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void SSBO::bind() const
+void SSBO::bindBase(GLuint binding) const
 {
-    glBindBuffer(
+    glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
+        binding,
         id);
 }
 

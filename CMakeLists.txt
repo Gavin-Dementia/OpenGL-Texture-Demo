@@ -14,10 +14,11 @@ set(SRC_FILES
     src/gpu/upload/SceneUploader.cpp
 
     # buffers
+    src/gpu/buffers/DrawBuffer.cpp
     src/gpu/buffers/MaterialBuffer.cpp
     src/gpu/buffers/ObjectBuffer.cpp
     src/gpu/buffers/SSBO.cpp
-
+    src/gpu/buffers/TransformBuffer.cpp
 
     #pipeline
     src/gpu/pipeline/VisibilityPipeline.cpp

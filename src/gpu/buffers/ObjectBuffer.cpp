@@ -3,18 +3,29 @@
 
 void ObjectBuffer::init()
 {
+    ssbo.create(
+        sizeof(GPUObjectData),
+        GL_DYNAMIC_DRAW);
 }
 
-void ObjectBuffer::upload(const std::vector<GPUObjectData>& objects)
+void ObjectBuffer::upload(
+    const std::vector<GPUObjectData>& objects)
 {
+    if (objects.empty())
+        return;
+
+    ssbo.upload(
+        objects.data(),
+        sizeof(GPUObjectData) * objects.size());
 }
 
-void ObjectBuffer::bind(GLuint binding) const
+void ObjectBuffer::bind() const
 {
+    ssbo.bindBase(Binding);
 }
 
 size_t ObjectBuffer::size() const
 {
-    return 0;
+    return ssbo.getSize() / sizeof(GPUObjectData);
 }
 

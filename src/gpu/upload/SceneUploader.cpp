@@ -2,45 +2,30 @@
 
 void SceneUploader::init()
 {
-    // binding points
-    meshBuffer.create(1024 * 1024, 0);
-    materialBuffer.create(1024 * 1024, 1);
-    transformBuffer.create(1024 * 1024, 2);
-    instanceBuffer.create(1024 * 1024, 3);
+    drawBuffer.init();
+    materialBuffer.init();
+    transformBuffer.init();
+    objectBuffer.init();
 
-    // ======================
-    // CAMERA UBO (IMPORTANT)
+    // CAMERA UBO 
     glGenBuffers(1, &cameraUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, cameraUBO);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraGPU), nullptr, GL_DYNAMIC_DRAW);
-
-    // binding = 0
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);
+    
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);// binding = 0
 }
 
-void SceneUploader::uploadMeshes(const std::vector<MeshDrawData>& meshes)
-{
-    meshBuffer.upload(meshes.data(),
-                       meshes.size() * sizeof(MeshDrawData));
-}
+void SceneUploader::uploadDrawData(const std::vector<DrawCommandData>& drawdata)
+{    drawBuffer.upload(drawdata);  }
 
 void SceneUploader::uploadMaterials(const std::vector<GPUMaterialData>& materials)
-{
-    materialBuffer.upload(materials.data(),
-                          materials.size() * sizeof(GPUMaterialData));
-}
+{    materialBuffer.upload(materials);  }
 
 void SceneUploader::uploadTransforms(const std::vector<GPUTransformData>& transforms)
-{
-    transformBuffer.upload(transforms.data(),
-                           transforms.size() * sizeof(GPUTransformData));
-}
+{    transformBuffer.upload(transforms);  }
 
-void SceneUploader::uploadInstances(const std::vector<GPUObjectData>& instances)
-{
-    instanceBuffer.upload(instances.data(),
-                          instances.size() * sizeof(GPUObjectData));
-}
+void SceneUploader::uploadObjects(const std::vector<GPUObjectData>& objects)
+{    objectBuffer.upload(objects);  }
 
 void SceneUploader::updateCamera(const Camera& cam, float aspect)
 {
@@ -56,9 +41,9 @@ void SceneUploader::updateCamera(const Camera& cam, float aspect)
 
 void SceneUploader::bindAll() const
 {
-    meshBuffer.bindBase();
-    materialBuffer.bindBase();
-    transformBuffer.bindBase();
-    instanceBuffer.bindBase();
+    drawBuffer.bind();
+    materialBuffer.bind();
+    transformBuffer.bind();
+    objectBuffer.bind();
 }
 

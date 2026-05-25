@@ -12,12 +12,23 @@ class MaterialBuffer
 {
 public:
 
+    static constexpr GLuint Binding = 1;
+
+    void init();
+
     void upload(
         const std::vector<GPUMaterialData>& materials);
+
+    void bind() const;
+
+    size_t size() const;
+    
+    GLuint getID() const
+    {  return ssbo.getID();  }
 
 private:
 
     SSBO ssbo;
 };
-#endif // MATERIALBUFFER_H
 
+#endif // MATERIALBUFFER_H

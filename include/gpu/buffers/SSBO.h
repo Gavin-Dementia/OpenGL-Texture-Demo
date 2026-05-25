@@ -9,10 +9,9 @@ public:
 
     SSBO();
     ~SSBO();
-
+    
     void create(
         size_t size,
-        GLuint binding,
         GLenum usage = GL_DYNAMIC_DRAW);
 
     void upload(
@@ -20,8 +19,8 @@ public:
         size_t size,
         size_t offset = 0);
 
-    void bind() const;
     void bindBase() const;
+    void bindBase(GLuint binding) const;
     void destroy();
 
     GLuint getID() const;
@@ -31,10 +30,10 @@ public:
 private:
 
     GLuint id = 0;
+    size_t bufferSize = 0;
+    
     GLuint binding = 0;
     GLuint debugSSBO;
-
-    size_t bufferSize = 0;
 };
 
 #endif // SSBO_H

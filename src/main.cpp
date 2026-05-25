@@ -37,7 +37,6 @@ float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
 // =======================
 // Camera
-// =======================
 unsigned int indices[] = {
     0, 1, 2,
     2, 3, 0
@@ -73,123 +72,6 @@ void processInput(GLFWwindow* window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(3, deltaTime);
 }
-
-
-#if 0
-int main()
-{
-// 0  Meshes
-// 1  Materials
-// 2  Transforms
-// 3  Instances (render)
-// 4  DirLight
-// 5  IndirectCommands
-// 6  Counter
-// 7  Debug
-// 8  VisibleInstances (compute only)
-
-    Logger::init();
-    Logger::info("App start");
-
-    // =======================
-    // GLFW init
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "GPU Driven", nullptr, nullptr);
-    if (!window)
-    {
-        std::cout << "Failed window\n";
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // =======================
-    // GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "GLAD failed\n";
-        return -1;
-    }
-
-    std::cout << "GL: " << glGetString(GL_VERSION) << std::endl;
-
-    glEnable(GL_DEPTH_TEST);
-
-    // =======================
-    // Scene (CPU side empty for now)
-    Scene scene;
-
-    // =======================
-    // GPU systems
-    GPUScene gpuScene;
-    VisibilitySystem visibility;
-    RendererGPU renderer;
-
-    // =======================
-    // Mesh
-    Mesh cube = MeshFactory::createCube();
-
-    // ⚠️ 重要：避免 crash
-    // 不在 constructor 做 shader 初始化
-    renderer.init();
-
-    // =======================
-    // Shader (standalone test only)
-    std::cout << "A: before shader\n";
-    Shader basicShader = ShaderLoader::load("basic.vert", "basic.frag");
-    std::cout << "B: after shader\n";
-    basicShader.use();
-
-    // =======================
-    // MAIN LOOP
-    while (!glfwWindowShouldClose(window))
-    {
-        float dt = 0.016f;
-        processInput(window, dt);
-
-        glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        float aspect = (float)WIDTH / (float)HEIGHT;
-
-        // =========================
-        // CAMERA → GPU UBO
-        gpuScene.updateCamera(camera, aspect);
-
-        // =========================
-        // VISIBILITY (IMPORTANT)
-        visibility.dispatchCulling(
-            gpuScene.getInstanceBuffer().getID(),
-            gpuScene.getTransformBuffer().getID(),
-            gpuScene.getMeshBuffer().getID(),
-            gpuScene.getCameraUBO().getID(), // ❗ we fix this below
-            1 // temporary instanceCount
-        );
-
-        // =========================
-        // RENDER PASS
-        renderer.render(gpuScene, visibility);
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-
-    glfwTerminate();
-    Logger::info("shutdown");
-    Logger::shutdown();
-    return 0;
-}
-#endif
 
 #if 1
 int main()
@@ -272,23 +154,23 @@ int main()
 
     // =======================
     // GPU MESH UPLOAD
-    MeshDrawData gpuMesh{};
-    gpuMesh.vertexOffset = 0;
-    gpuMesh.indexOffset = 0;
-    gpuMesh.vertexCount = cube.vertices.size();
-    gpuMesh.indexCount = cube.indices.size();
+    DrawCommandData gpuDraw{};
+    gpuDraw.vertexOffset = 0;
+    gpuDraw.indexOffset = 0;
+    gpuDraw.vertexCount = cube.vertices.size();
+    gpuDraw.indexCount = cube.indices.size();
 
-    scene.uploadMeshes({ gpuMesh });
-
+    scene.uploadDrawData({ gpuDraw });
+    
     // =======================
     // INSTANCE
-    GPUObjectData inst{};
-    inst.transformID = 0;
-    inst.meshID = 0;
-    inst.materialID = 0;
-    inst.visibilityID = 0;
+    GPUObjectData object{};
+    object.transformID = 0;
+    object.meshID = 0;
+    object.materialID = 0;
+    object.visibilityID = 0;
 
-    scene.uploadInstances({ inst });
+    scene.uploadObjects({ object });
 
     // =======================
     // TRANSFORM

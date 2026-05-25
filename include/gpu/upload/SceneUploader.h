@@ -3,12 +3,17 @@
 #include <vector>
 
 #include "gpu/buffers/SSBO.h"
+#include "gpu/layout/DrawCommandData.h"
 #include "gpu/layout/GPUTransformData.h"
-#include "gpu/layout/MeshDrawData.h"
 #include "gpu/layout/GPUMaterialData.h"
 #include "gpu/layout/GPUObjectData.h"
 #include "scene/Scene.h"
 #include "graphics/Camera.h"
+
+#include "gpu/buffers/ObjectBuffer.h"
+#include "gpu/buffers/MaterialBuffer.h"
+#include "gpu/buffers/TransformBuffer.h"
+#include "gpu/buffers/DrawBuffer.h"
 
 class SceneUploader
 {
@@ -17,12 +22,12 @@ public:
     void init();
 
     // static upload
-    void uploadMeshes(const std::vector<MeshDrawData>& meshes);
+    void uploadDrawData(const std::vector<DrawCommandData>& drawdata);
     void uploadMaterials(const std::vector<GPUMaterialData>& materials);
 
     // per-frame upload
     void uploadTransforms(const std::vector<GPUTransformData>& transforms);
-    void uploadInstances(const std::vector<GPUObjectData>& instances);
+    void uploadObjects(const std::vector<GPUObjectData>& objects);
 
     // CAMERA (IMPORTANT)
     void updateCamera(const Camera& cam, float aspect);
@@ -30,12 +35,12 @@ public:
     // bind all SSBOs
     void bindAll() const;
 
-    const SSBO& getMeshBuffer() const { return meshBuffer; }
-    const SSBO& getMaterialBuffer() const { return materialBuffer; }
-    const SSBO& getTransformBuffer() const { return transformBuffer; }
-    const SSBO& getInstanceBuffer() const { return instanceBuffer; }
-    GLuint getCameraUBO() const { return cameraUBO; }
+    const ObjectBuffer& getObjectBuffer() const { return objectBuffer; }
+    const MaterialBuffer& getMaterialBuffer() const { return materialBuffer; }
+    const TransformBuffer& getTransformBuffer() const { return transformBuffer; }
+    const DrawBuffer& getDrawBuffer() const { return drawBuffer; }
 
+    GLuint getCameraUBO() const { return cameraUBO; }
     GLuint getGlobalVAO() const { return 0; }
 
 private:
@@ -48,10 +53,10 @@ private:
 
     GLuint cameraUBO = 0;
 
-    SSBO meshBuffer;
-    SSBO materialBuffer;
-    SSBO transformBuffer;
-    SSBO instanceBuffer;
+    DrawBuffer drawBuffer;
+    MaterialBuffer materialBuffer;
+    TransformBuffer transformBuffer;
+    ObjectBuffer objectBuffer;
 };
 
 
