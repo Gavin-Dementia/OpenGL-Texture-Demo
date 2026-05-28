@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "gpu/buffers/SSBO.h"
-#include "gpu/layout/DrawCommandData.h"
+#include "gpu/layout/MeshDrawData.h"
 
 
 class DrawBuffer
@@ -17,7 +17,7 @@ public:
     void init();
 
     void upload(
-        const std::vector<DrawCommandData>& commands);
+        const std::vector<MeshDrawData>& commands);
 
     void bind() const;
 

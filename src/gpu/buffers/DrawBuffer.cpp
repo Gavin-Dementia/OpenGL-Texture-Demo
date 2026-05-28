@@ -1,23 +1,23 @@
 #include "gpu/buffers/DrawBuffer.h"
 
-#include "gpu/layout/DrawCommandData.h"
+#include "gpu/layout/MeshDrawData.h"
 
 void DrawBuffer::init()
 {
     ssbo.create(
-        sizeof(DrawCommandData),
+        sizeof(MeshDrawData),
         GL_DYNAMIC_DRAW);
 }
 
 void DrawBuffer::upload(
-    const std::vector<DrawCommandData>& commands)
+    const std::vector<MeshDrawData>& commands)
 {
     if (commands.empty())
         return;
 
     ssbo.upload(
         commands.data(),
-        sizeof(DrawCommandData) * commands.size());
+        sizeof(MeshDrawData) * commands.size());
 }
 
 void DrawBuffer::bind() const
@@ -27,6 +27,6 @@ void DrawBuffer::bind() const
 
 size_t DrawBuffer::size() const
 {
-    return ssbo.getSize() / sizeof(DrawCommandData);
+    return ssbo.getSize() / sizeof(MeshDrawData);
 }
 

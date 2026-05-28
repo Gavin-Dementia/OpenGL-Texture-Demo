@@ -37,3 +37,13 @@
 65	1857	8014230547680461	CMakeFiles/main.dir/src/gpu/pipeline/VisibilityPipeline.cpp.obj	1b2e0aa18b820d53
 21	2107	8014230547241186	CMakeFiles/main.dir/src/main.cpp.obj	b77e411d547af008
 2108	2351	8014230568104626	C:/3Dproject/bin/main.exe	f8fee9832a3c0964
+99	1275	8016555086201138	CMakeFiles/main.dir/src/gpu/buffers/SSBO.cpp.obj	63e03ef23d1c921c
+94	1283	8016555086147479	CMakeFiles/main.dir/src/gpu/buffers/ObjectBuffer.cpp.obj	a42b70285046556c
+105	4580	8016555086254928	CMakeFiles/main.dir/src/gpu/buffers/TransformBuffer.cpp.obj	4519cc1c8ab9ea61
+88	4590	8016555086081820	CMakeFiles/main.dir/src/gpu/buffers/MaterialBuffer.cpp.obj	517e86c142037c6a
+82	4598	8016555086019804	CMakeFiles/main.dir/src/gpu/buffers/DrawBuffer.cpp.obj	d7508dd34848ef0b
+76	4971	8016555085962485	CMakeFiles/main.dir/src/gpu/upload/SceneUploader.cpp.obj	7622b9158617a2d7
+70	5004	8016555085906117	CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj	f07104c83cca9b98
+110	5020	8016555086304794	CMakeFiles/main.dir/src/gpu/pipeline/VisibilityPipeline.cpp.obj	1b2e0aa18b820d53
+32	1941	8016555471941044	CMakeFiles/main.dir/src/main.cpp.obj	b77e411d547af008
+1942	2581	8016555491074546	C:/3Dproject/bin/main.exe	f8fee9832a3c0964

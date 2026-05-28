@@ -15,7 +15,7 @@ void SceneUploader::init()
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);// binding = 0
 }
 
-void SceneUploader::uploadDrawData(const std::vector<DrawCommandData>& drawdata)
+void SceneUploader::uploadDrawData(const std::vector<MeshDrawData>& drawdata)
 {    drawBuffer.upload(drawdata);  }
 
 void SceneUploader::uploadMaterials(const std::vector<GPUMaterialData>& materials)

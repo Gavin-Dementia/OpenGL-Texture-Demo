@@ -154,7 +154,7 @@ int main()
 
     // =======================
     // GPU MESH UPLOAD
-    DrawCommandData gpuDraw{};
+    MeshDrawData gpuDraw{};
     gpuDraw.vertexOffset = 0;
     gpuDraw.indexOffset = 0;
     gpuDraw.vertexCount = cube.vertices.size();

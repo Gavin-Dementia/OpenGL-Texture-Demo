@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-struct DrawCommandData
+struct MeshDrawData
 {
 
     uint32_t vertexOffset;

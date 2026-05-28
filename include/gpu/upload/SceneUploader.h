@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "gpu/buffers/SSBO.h"
-#include "gpu/layout/DrawCommandData.h"
+#include "gpu/layout/MeshDrawData.h"
 #include "gpu/layout/GPUTransformData.h"
 #include "gpu/layout/GPUMaterialData.h"
 #include "gpu/layout/GPUObjectData.h"
@@ -22,7 +22,7 @@ public:
     void init();
 
     // static upload
-    void uploadDrawData(const std::vector<DrawCommandData>& drawdata);
+    void uploadDrawData(const std::vector<MeshDrawData>& drawdata);
     void uploadMaterials(const std::vector<GPUMaterialData>& materials);
 
     // per-frame upload
