@@ -11,14 +11,8 @@ class GPUMaterialData;
 class MaterialBuffer
 {
 public:
-
-    static constexpr GLuint Binding = 1;
-
     void init();
-
-    void upload(
-        const std::vector<GPUMaterialData>& materials);
-
+    void upload(const std::vector<GPUMaterialData>& materials);
     void bind() const;
 
     size_t size() const;

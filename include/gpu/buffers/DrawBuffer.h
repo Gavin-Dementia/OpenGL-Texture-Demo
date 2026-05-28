@@ -11,16 +11,9 @@
 class DrawBuffer
 {
 public:
-
-    static constexpr GLuint Binding = 5;
-
     void init();
-
-    void upload(
-        const std::vector<MeshDrawData>& commands);
-
+    void upload(const std::vector<MeshDrawData>& commands);
     void bind() const;
-
     size_t size() const;
  
     GLuint getID() const

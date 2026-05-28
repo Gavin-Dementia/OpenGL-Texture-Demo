@@ -19,7 +19,6 @@ public:
         size_t size,
         size_t offset = 0);
 
-    void bindBase() const;
     void bindBase(GLuint binding) const;
     void destroy();
 
@@ -31,8 +30,7 @@ private:
 
     GLuint id = 0;
     size_t bufferSize = 0;
-    
-    GLuint binding = 0;
+
     GLuint debugSSBO;
 };
 

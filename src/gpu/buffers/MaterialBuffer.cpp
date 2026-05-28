@@ -1,5 +1,6 @@
 #include"gpu/buffers/MaterialBuffer.h"
 #include "gpu/layout/GPUMaterialData.h"
+#include "gpu/layout/Binding.h"
 
 void MaterialBuffer::init()
 {
@@ -20,12 +21,8 @@ void MaterialBuffer::upload(
 }
 
 void MaterialBuffer::bind() const
-{
-    ssbo.bindBase(Binding);
-}
+{    ssbo.bindBase(Binding::SSBO::MaterialBuffer);  }
 
 size_t MaterialBuffer::size() const
-{
-    return ssbo.getSize() / sizeof(GPUMaterialData);
-}
+{    return ssbo.getSize() / sizeof(GPUMaterialData);  }
 

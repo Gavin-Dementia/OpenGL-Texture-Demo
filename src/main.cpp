@@ -21,6 +21,8 @@
 #include "gpu/upload/SceneUploader.h"
 #include "gpu/pipeline/VisibilityPipeline.h"
 #include "gpu/backend/RendererGPU.h"
+#include "gpu/layout/GPUObjectData.h"
+#include "gpu/layout/GPUTransformData.h"
 //"stb_image.h" first define in texture.h with  #define STB_IMAGE_IMPLEMENTATION
 
 // =======================
@@ -160,7 +162,15 @@ int main()
     gpuDraw.vertexCount = cube.vertices.size();
     gpuDraw.indexCount = cube.indices.size();
 
-    scene.uploadDrawData({ gpuDraw });
+    scene.uploadDrawData(gpuDraw);
+
+//     std::vector<glm::vec4> bounds;
+// bounds.push_back(glm::vec4(
+//     mesh.boundingCenter,
+//     mesh.boundingRadius
+// ));
+
+// scene.uploadMeshBounds(bounds);
     
     // =======================
     // INSTANCE
@@ -170,14 +180,14 @@ int main()
     object.materialID = 0;
     object.visibilityID = 0;
 
-    scene.uploadObjects({ object });
+    scene.uploadObjects(object);
 
     // =======================
     // TRANSFORM
     GPUTransformData t{};
     t.model = glm::mat4(1.0f);
 
-    scene.uploadTransforms({ t });
+    scene.uploadTransforms(t);
 
     // =======================
     // CAMERA SHADER TEST

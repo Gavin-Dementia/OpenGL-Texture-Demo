@@ -4,7 +4,6 @@
 #include "graphics/Shader.h"
 
 class SceneUploader;
-// class VisibilitySystem;
 class VisibilityPipeline;
 
 class RendererGPU

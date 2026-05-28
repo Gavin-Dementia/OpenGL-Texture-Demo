@@ -11,12 +11,8 @@ class GPUObjectData;
 class ObjectBuffer
 {
 public:
-    static constexpr GLuint Binding= 0;
-
     void init();
-
     void upload(const std::vector<GPUObjectData>& objects);
-
     void bind() const;
 
     size_t size() const;

@@ -1,5 +1,6 @@
 #include "gpu/buffers/ObjectBuffer.h"
 #include "gpu/layout/GPUObjectData.h"
+#include "gpu/layout/Binding.h"
 
 void ObjectBuffer::init()
 {
@@ -20,12 +21,8 @@ void ObjectBuffer::upload(
 }
 
 void ObjectBuffer::bind() const
-{
-    ssbo.bindBase(Binding);
-}
+{    ssbo.bindBase(Binding::SSBO::ObjectBuffer);  }
 
 size_t ObjectBuffer::size() const
-{
-    return ssbo.getSize() / sizeof(GPUObjectData);
-}
+{    return ssbo.getSize() / sizeof(GPUObjectData);  }
 

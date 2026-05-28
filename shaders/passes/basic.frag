@@ -56,18 +56,18 @@ struct PointLightGPU
 // =========================
 // SSBO bindings
 
-layout(std430, binding = 1) buffer Materials
-{    Material materials[];    };
-
-layout(std430, binding = 3) buffer Instances
+layout(std430, binding = 3) buffer InstanceBuffer
 {    Instance instances[];    };
+
+layout(std430, binding = 5) buffer MaterialBuffer
+{    Material materials[];    };
 
 #define NR_POINT_LIGHTS 16
 
-layout(std430, binding = 4) buffer DirLightBuffer
+layout(std430, binding = 9) buffer DirLightBuffer
 {    DirLightGPU dirLight;    };
 
-layout(std430, binding =5) buffer PointLights
+layout(std430, binding = 10) buffer PointLights
 {    PointLightGPU pointLights[];    };
 
 // =========================

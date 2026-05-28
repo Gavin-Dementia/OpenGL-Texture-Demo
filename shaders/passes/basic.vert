@@ -11,10 +11,10 @@ struct Instance {
     uint visibilityID;
 };
 
-layout(std430, binding = 2) buffer Transforms
+layout(std430, binding = 1) buffer TransformBuffer
 {    mat4 transforms[];    };
 
-layout(std430, binding = 3) buffer Instances
+layout(std430, binding = 3) buffer InstanceBuffer
 {    Instance instances[];    };
 
 layout(std430, binding = 7) buffer DebugBuffer

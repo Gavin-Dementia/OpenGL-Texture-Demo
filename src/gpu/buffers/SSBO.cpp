@@ -55,14 +55,6 @@ void SSBO::bindBase(GLuint binding) const
         id);
 }
 
-void SSBO::bindBase() const
-{
-    glBindBufferBase(
-        GL_SHADER_STORAGE_BUFFER,
-        binding,
-        id);
-}
-
 void SSBO::destroy()
 {
     if (id != 0)

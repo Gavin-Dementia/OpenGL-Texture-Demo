@@ -19,19 +19,17 @@ public:
 
     void bindBuffers() const;
     void bindInputs(const SceneUploader& scene);
-    void bindOutputs() const;
+    void bindOutputs(const SceneUploader& scene);
 
-    GLuint getIndirectBuffer() const { return indirectCommandBuffer.getID(); }
-    GLuint getVisibleBuffer() const { return visibleInstanceBuffer.getID(); }
-    GLuint getCounterBuffer() const { return counterBuffer.getID(); }
+    GLuint getVisibleBuffer() const { return VisibilityBuffer.getID(); }
+    GLuint getCounterBuffer() const { return CounterBuffer.getID(); }
 
     void runCullCompute(SceneUploader&, Shader&) {}
-    int getDrawCount() const { return 0; }
+
 private:
 
-    SSBO indirectCommandBuffer;
-    SSBO visibleInstanceBuffer;
-    SSBO counterBuffer;
+    SSBO VisibilityBuffer;
+    SSBO CounterBuffer;
 
     Shader computeProgram;
 };

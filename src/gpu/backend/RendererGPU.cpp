@@ -23,12 +23,12 @@ void RendererGPU::render(
 {
     std::cout << "RendererGPU render\n";
     scene.bindAll();
-    visibility.bindOutputs();
+    visibility.bindOutputs(scene);
 
     glBindVertexArray(vao);
 
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
-                 visibility.getIndirectBuffer());
+                 scene.getDrawBuffer().getID());
 
     // glBindBuffer(GL_PARAMETER_BUFFER,
     //              visibility.getCounterBuffer());4.6
@@ -101,19 +101,19 @@ void RendererGPU::drawIndirectDebug(
     VisibilityPipeline& visibility,
     Shader& debugShader)
 {
-    debugShader.use();
+    // debugShader.use();
 
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
-                 visibility.getIndirectBuffer());
+    // glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
+    //              scene.getDrawBuffer().getID());
 
-    glBindVertexArray(vao);
+    // glBindVertexArray(vao);
 
-    glMultiDrawElementsIndirect(
-        GL_TRIANGLES,
-        GL_UNSIGNED_INT,
-        nullptr,
-        MAX_MESHES,
-        0);
+    // glMultiDrawElementsIndirect(
+    //     GL_TRIANGLES,
+    //     GL_UNSIGNED_INT,
+    //     nullptr,
+    //     MAX_MESHES,
+    //     0);
 
-    glBindVertexArray(0);
+    // glBindVertexArray(0);
 }

@@ -6,31 +6,24 @@
 
 void VisibilityPipeline::init()
 {
-    // indirect draw commands (input for renderer)
-    indirectCommandBuffer.create(
-        1024 * sizeof(IndirectCommandBuffer),
-        GL_DYNAMIC_DRAW
-    );
-    
     // atomic counter (how many visible)
-    counterBuffer.create(sizeof(GLuint), GL_DYNAMIC_DRAW);
+    CounterBuffer.create(sizeof(GLuint), GL_DYNAMIC_DRAW);
 
     // visible instances (output of culling)
-    visibleInstanceBuffer.create(1024 * 1024, GL_DYNAMIC_DRAW);
+    VisibilityBuffer.create(1024 * 1024, GL_DYNAMIC_DRAW);
 
     GLuint zero = 0;
-    counterBuffer.upload(&zero, sizeof(GLuint));
+    CounterBuffer.upload(&zero, sizeof(GLuint));
 
-    indirectCommandBuffer.bindBase(5);
-    counterBuffer.bindBase(6);
-    visibleInstanceBuffer.bindBase(8);
+    CounterBuffer.bindBase(6);
+    VisibilityBuffer.bindBase(8);
 
     computeProgram = ShaderLoader::loadCompute("cull.comp");
 }
 
 void VisibilityPipeline::bindBuffers() const
 {
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer.getID());
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, CounterBuffer.getID());
     unsigned int zero = 0;
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(unsigned int), &zero);
 }
@@ -43,17 +36,19 @@ void VisibilityPipeline::bindInputs(const SceneUploader& scene)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
                      scene.getTransformBuffer().getID());
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
-                     scene.getDrawBuffer().getID());
-
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, scene.getCameraUBO());
 }
 
-void VisibilityPipeline::bindOutputs() const
+void VisibilityPipeline::bindOutputs(const SceneUploader& scene)
 {
-    indirectCommandBuffer.bindBase();
-    visibleInstanceBuffer.bindBase();
-    counterBuffer.bindBase();
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4,
+                     scene.getDrawBuffer().getID());
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8,
+                     VisibilityBuffer.getID());
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6,
+                     CounterBuffer.getID());
 }
 
 void VisibilityPipeline::dispatchCulling(
@@ -64,11 +59,11 @@ void VisibilityPipeline::dispatchCulling(
     // glUseProgram(computeProgram);
     computeProgram.use();
     bindInputs(gpuScene);
-    bindOutputs();
+    bindOutputs(gpuScene);
 
     // reset counter
     GLuint zero = 0;
-    counterBuffer.upload(&zero, sizeof(GLuint));
+    CounterBuffer.upload(&zero, sizeof(GLuint));
 
     // dispatch
     glDispatchCompute((instanceCount + 63) / 64, 1, 1);

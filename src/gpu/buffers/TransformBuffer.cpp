@@ -1,5 +1,5 @@
 #include "gpu/buffers/TransformBuffer.h"
-
+#include "gpu/layout/Binding.h"
 #include "gpu/layout/GPUTransformData.h"
 
 void TransformBuffer::init()
@@ -21,12 +21,8 @@ void TransformBuffer::upload(
 }
 
 void TransformBuffer::bind() const
-{
-    ssbo.bindBase(Binding);
-}
+{    ssbo.bindBase(Binding::SSBO::TransformBuffer);  }
 
 size_t TransformBuffer::size() const
-{
-    return ssbo.getSize() / sizeof(GPUTransformData);
-}
+{    return ssbo.getSize() / sizeof(GPUTransformData);  }
 

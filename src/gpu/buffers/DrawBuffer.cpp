@@ -1,5 +1,5 @@
 #include "gpu/buffers/DrawBuffer.h"
-
+#include "gpu/layout/Binding.h"
 #include "gpu/layout/MeshDrawData.h"
 
 void DrawBuffer::init()
@@ -21,12 +21,8 @@ void DrawBuffer::upload(
 }
 
 void DrawBuffer::bind() const
-{
-    ssbo.bindBase(Binding);
-}
+{    ssbo.bindBase(Binding::SSBO::DrawBuffer);  }
 
 size_t DrawBuffer::size() const
-{
-    return ssbo.getSize() / sizeof(MeshDrawData);
-}
+{    return ssbo.getSize() / sizeof(MeshDrawData);  }
 

@@ -1,4 +1,7 @@
 #include "gpu/upload/SceneUploader.h"
+#include "gpu/layout/GPUObjectData.h"
+#include "gpu/layout/GPUTransformData.h"
+#include "gpu/layout/GPUMaterialData.h"
 
 void SceneUploader::init()
 {
@@ -6,6 +9,7 @@ void SceneUploader::init()
     materialBuffer.init();
     transformBuffer.init();
     objectBuffer.init();
+    meshBoundsBuffer.init();
 
     // CAMERA UBO 
     glGenBuffers(1, &cameraUBO);
@@ -18,14 +22,32 @@ void SceneUploader::init()
 void SceneUploader::uploadDrawData(const std::vector<MeshDrawData>& drawdata)
 {    drawBuffer.upload(drawdata);  }
 
+void SceneUploader::uploadDrawData(const MeshDrawData& data)
+{    uploadDrawData(std::vector<MeshDrawData>{data});  }
+
 void SceneUploader::uploadMaterials(const std::vector<GPUMaterialData>& materials)
 {    materialBuffer.upload(materials);  }
+
+void SceneUploader::uploadMaterials(const GPUMaterialData& material)
+{    uploadMaterials(std::vector<GPUMaterialData>{material});  }
+
+void SceneUploader::uploadMeshBounds(const std::vector<glm::vec4>& bounds)
+{    meshBoundsBuffer.upload(bounds);  }
+
+void SceneUploader::uploadMeshBounds(const glm::vec4& bound)
+{    uploadMeshBounds(std::vector<glm::vec4>{bound});  }
 
 void SceneUploader::uploadTransforms(const std::vector<GPUTransformData>& transforms)
 {    transformBuffer.upload(transforms);  }
 
+void SceneUploader::uploadTransforms(const GPUTransformData& transform)
+{    uploadTransforms(std::vector<GPUTransformData>{transform});  }
+
 void SceneUploader::uploadObjects(const std::vector<GPUObjectData>& objects)
 {    objectBuffer.upload(objects);  }
+
+void SceneUploader::uploadObjects(const GPUObjectData& obj)
+{    uploadObjects(std::vector<GPUObjectData>{obj});  }
 
 void SceneUploader::updateCamera(const Camera& cam, float aspect)
 {
@@ -41,9 +63,10 @@ void SceneUploader::updateCamera(const Camera& cam, float aspect)
 
 void SceneUploader::bindAll() const
 {
-    drawBuffer.bind();
+    // drawBuffer.bind();
     materialBuffer.bind();
     transformBuffer.bind();
     objectBuffer.bind();
+    meshBoundsBuffer.bind();
 }
 
