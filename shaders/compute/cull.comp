@@ -75,7 +75,13 @@ void main()
     if (id >= objects.length())
         return;
 
-    atomicAdd(counter.drawCount, 1);
+    uint drawID = atomicAdd(counter.drawCount, 1);
+
+    commands[drawID].count = 36;
+    commands[drawID].instanceCount = 1;
+    commands[drawID].firstIndex = 0;
+    commands[drawID].baseVertex = 0;
+    commands[drawID].baseInstance = id;
 }
 
 #if 0

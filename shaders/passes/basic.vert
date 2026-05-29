@@ -36,8 +36,10 @@ void main()
 {
     uint instanceID = gl_InstanceID;
     vDebugColor = debugColor[instanceID];
-
     Instance inst = instances[instanceID];
+    //uint objectID = gl_BaseInstance;
+    //vDebugColor = debugColor[objectID];
+    //Instance inst = instances[objectID];
 
     mat4 model = transforms[inst.transformID];
 

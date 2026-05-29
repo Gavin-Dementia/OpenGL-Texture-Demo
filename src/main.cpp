@@ -164,31 +164,56 @@ int main()
 
     scene.uploadDrawData(gpuDraw);
 
-//     std::vector<glm::vec4> bounds;
-// bounds.push_back(glm::vec4(
-//     mesh.boundingCenter,
-//     mesh.boundingRadius
-// ));
+    // std::vector<glm::vec4> bounds;
+    // bounds.push_back(glm::vec4(
+    //     mesh.boundingCenter,
+    //     mesh.boundingRadius
+    // ));
+    // scene.uploadMeshBounds(bounds);
+#if 1
+    GPUObjectData objects{};
+    objects.transformID = 0;
+    objects.meshID = 0;
+    objects.materialID = 0;
+    objects.visibilityID = 0;
 
-// scene.uploadMeshBounds(bounds);
-    
-    // =======================
-    // INSTANCE
-    GPUObjectData object{};
-    object.transformID = 0;
-    object.meshID = 0;
-    object.materialID = 0;
-    object.visibilityID = 0;
+    GPUTransformData transforms{};
+    transforms.model = glm::mat4(1.0f);
+#else
+    std::vector<GPUObjectData> objects;
+    std::vector<GPUTransformData> transforms;
 
-    scene.uploadObjects(object);
+    int index = 0;
 
-    // =======================
-    // TRANSFORM
-    GPUTransformData t{};
-    t.model = glm::mat4(1.0f);
+    for (int z = 0; z < 3; z++)
+    {
+        for (int x = 0; x < 3; x++)
+        {
+            GPUObjectData obj{};
+            obj.transformID = index;
+            obj.meshID = 0;
+            obj.materialID = 0;
+            obj.visibilityID = 0;
 
-    scene.uploadTransforms(t);
+            objects.push_back(obj);
 
+            GPUTransformData t{};
+            t.model = glm::translate(
+                glm::mat4(1.0f),
+                glm::vec3(
+                    x * 2.5f,
+                    0.0f,
+                    -z * 2.5f
+                ));
+
+            transforms.push_back(t);
+
+            index++;
+        }
+    }
+#endif
+    scene.uploadObjects(objects);
+    scene.uploadTransforms(transforms);
     // =======================
     // CAMERA SHADER TEST
     Shader basicShader = ShaderLoader::loadPass("basic.vert", "basic.frag");
@@ -208,7 +233,7 @@ int main()
 
         // =======================
         // GPU PIPELINE
-        visibility.dispatchCulling(scene, 1);
+        visibility.dispatchCulling(scene, 9);
 
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
         glFinish();

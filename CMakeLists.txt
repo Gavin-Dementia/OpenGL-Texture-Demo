@@ -16,10 +16,11 @@ set(SRC_FILES
     # buffers
     src/gpu/buffers/DrawBuffer.cpp
     src/gpu/buffers/MaterialBuffer.cpp
+    src/gpu/buffers/MeshBoundsBuffer.cpp
+    src/gpu/buffers/MeshBuffer.cpp
     src/gpu/buffers/ObjectBuffer.cpp
     src/gpu/buffers/SSBO.cpp
     src/gpu/buffers/TransformBuffer.cpp
-    src/gpu/buffers/MeshBoundsBuffer.cpp    
 
     #pipeline
     src/gpu/pipeline/VisibilityPipeline.cpp
