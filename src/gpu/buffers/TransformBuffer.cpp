@@ -23,6 +23,6 @@ void TransformBuffer::upload(
 void TransformBuffer::bind() const
 {    ssbo.bindBase(Binding::SSBO::TransformBuffer);  }
 
-size_t TransformBuffer::size() const
+GLuint TransformBuffer::size() const
 {    return ssbo.getSize() / sizeof(GPUTransformData);  }
 

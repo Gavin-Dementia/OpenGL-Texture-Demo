@@ -12,13 +12,9 @@
 // Scene Instance
 struct SceneInstance
 {
-    Mesh* mesh = nullptr;
-
-    Material* material = nullptr;
-
-    glm::mat4 transform = glm::mat4(1.0f);
-
-    bool visible = true;
+    Mesh* mesh;
+    Material* material;
+    glm::mat4 transform;
 };
 
 // ============================================
@@ -29,6 +25,10 @@ public:
 
     std::vector<SceneInstance> instances;
 
+    size_t getInstanceCount() const
+    {
+        return instances.size();
+    }
 };
 
 #endif // SCENE_H

@@ -5,12 +5,18 @@
 
 void SceneUploader::init()
 {
+    // Core scene buffers
     drawBuffer.init();
     materialBuffer.init();
-    transformBuffer.init();
-    objectBuffer.init();
     meshBoundsBuffer.init();
     meshBuffer.init();
+    objectBuffer.init();
+    transformBuffer.init();
+    // GPU Driven buffers
+    counterBuffer.init();
+    debugBuffer.init(sizeof(glm::vec4) * 1024);
+    instanceBuffer.init(1024);
+    visibilityBuffer.init(1024);
 
     // CAMERA UBO 
     glGenBuffers(1, &cameraUBO);
@@ -46,8 +52,6 @@ MeshDrawData SceneUploader::uploadMesh(const Mesh& mesh)
 
     return draw;
 }
-// uint32_t SceneUploader::uploadMesh(const Mesh& mesh)
-// {    return meshBuffer.uploadMesh(mesh.vertices, mesh.indices);  }
 
 void SceneUploader::uploadTransforms(const std::vector<GPUTransformData>& transforms)
 {    transformBuffer.upload(transforms);  }
@@ -56,7 +60,26 @@ void SceneUploader::uploadTransforms(const GPUTransformData& transform)
 {    uploadTransforms(std::vector<GPUTransformData>{transform});  }
 
 void SceneUploader::uploadObjects(const std::vector<GPUObjectData>& objects)
-{    objectBuffer.upload(objects);  }
+{    
+    if (objects.empty())  return;
+    // objectBuffer.upload(objects);  
+    std::vector<Instance> instances;
+    instances.reserve(objects.size());
+
+    for (auto& o : objects)
+    {
+        Instance i;
+        i.transformID = o.transformID;
+        i.meshID = o.meshID;
+        i.materialID = o.materialID;
+        i.visibilityID = o.visibilityID;
+
+        instances.push_back(i);
+    }
+
+    instanceBuffer.upload(instances.data(), instances.size());
+
+}
 
 void SceneUploader::uploadObjects(const GPUObjectData& obj)
 {    uploadObjects(std::vector<GPUObjectData>{obj});  }
@@ -75,11 +98,13 @@ void SceneUploader::updateCamera(const Camera& cam, float aspect)
 
 void SceneUploader::bindAll() const
 {
-    // drawBuffer.bind(); //
-    materialBuffer.bind();
-    meshBoundsBuffer.bind();
-    meshBuffer.bind();
     objectBuffer.bind();
     transformBuffer.bind();
+    meshBoundsBuffer.bind();
+    instanceBuffer.bind();
+    materialBuffer.bind();
+    drawBuffer.bind();
+    counterBuffer.bind();
+    visibilityBuffer.bind();
 }
 

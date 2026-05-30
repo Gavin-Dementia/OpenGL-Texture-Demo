@@ -5,13 +5,6 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoord;
 
 // =========================
-// GPU compacted visibility list
-layout(std430, binding = 8) buffer VisibilityBuffer
-{
-    uint instanceIndices[];
-};
-
-// =========================
 // Core buffers
 struct Instance
 {
@@ -21,20 +14,17 @@ struct Instance
     uint visibilityID;
 };
 
-layout(std430, binding = 3) buffer InstanceBuffer
-{
-    Instance instances[];
-};
-
 layout(std430, binding = 1) buffer TransformBuffer
-{
-    mat4 transforms[];
-};
+{    mat4 transforms[];  };
+
+layout(std430, binding = 3) buffer InstanceBuffer
+{    Instance instances[];  };
+
+layout(std430, binding = 8) buffer VisibilityBuffer
+{    uint instanceIndices[];  };
 
 layout(std430, binding = 7) buffer DebugBuffer
-{
-    vec4 debugColor[];
-};
+{    vec4 debugColor[];  };
 
 // =========================
 // Camera

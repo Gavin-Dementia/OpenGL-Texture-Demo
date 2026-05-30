@@ -2,7 +2,7 @@
 
 layout(local_size_x = 64) in;
 
-struct IndirectCommandBuffer
+struct DrawElementsIndirectCommandBuffer
 {
     uint count;
     uint instanceCount;
@@ -19,31 +19,90 @@ struct Instance
     uint visibilityID;
 };
 
-layout(std430, binding = 0) buffer ObjectBuffer
-{    Instance objects[];   };
+// =========================
+// Core Buffers (FROM REGISTRY)
 
-layout(std430, binding = 1) buffer TransformBuffer
-{    mat4 transforms[];    };
+layout(std430, binding = 0) buffer ObjectBuffer// optional
+{    uint objectData[];  };
 
 layout(std430, binding = 2) buffer MeshBoundsBuffer
-{    vec4 boundingSpheres[];    };
+{    vec4 boundingSpheres[];  };
 
 layout(std430, binding = 3) buffer InstanceBuffer
-{    Instance instances[];    };
+{    Instance instances[];  };
 
 layout(std430, binding = 4) buffer DrawBuffer
-{    IndirectCommandBuffer commands[];    };
+{    DrawElementsIndirectCommandBuffer commands[];  };
 
 layout(std430, binding = 6) buffer CounterBuffer
-{    uint drawCount;    };
-
-layout(std430, binding = 7) buffer DebugBuffer
-{    vec4 debugColor[];     };// per instance
+{    uint drawCount;  };
 
 layout(std430, binding = 8) buffer VisibilityBuffer
-{    Instance visibleObjects[];    };
+{    uint instanceIndices[];  };
+
+// =========================
+// Light buffers
+#if 0
+layout(std430, binding = 9) buffer DirLightBuffer
+{    DirLightGPU dirLight;  };
+
+layout(std430, binding = 10) buffer PointLightBuffer
+{    PointLightGPU pointLights[];  };
+#endif
+// =========================
+// Camera
+
+layout(std140, binding = 0) uniform CameraUBO
+{
+    mat4 view;
+    mat4 projection;
+    vec4 viewPos;
+};
+
 
 uniform mat4 viewProj;
+#if 0
+bool sphereInFrustum(vec4 sphere)
+{
+    vec4 c = viewProj * vec4(sphere.xyz, 1.0);
+
+    float r = sphere.w;
+
+    return (c.x > -c.w - r &&
+            c.x <  c.w + r &&
+            c.y > -c.w - r &&
+            c.y <  c.w + r &&
+            c.z > -c.w - r &&
+            c.z <  c.w + r);
+}
+
+void main()
+{
+    uint id = gl_GlobalInvocationID.x;
+
+    // safety guard
+    if (id >= objects.length())
+        return;
+
+    uint meshID = objects[id].meshID;
+
+    vec4 sphere = boundingSpheres[meshID];
+
+    bool visible = sphereInFrustum(sphere);
+
+    if (visible)
+    {
+        uint index = atomicAdd(drawCount, 1);
+
+        commands[index].count = 36;
+        commands[index].instanceCount = 1;
+        commands[index].firstIndex = 0;
+        commands[index].baseVertex = 0;
+        commands[index].baseInstance = id;
+    }
+}
+
+#else
 
 bool sphereInFrustum(vec4 sphere, mat4 mvp)
 {
@@ -67,31 +126,36 @@ void main()
 {
     uint id = gl_GlobalInvocationID.x;
 
-    if (id >= 9) return;
-
-    uint drawID = atomicAdd(drawCount, 1);
-
-    commands[drawID].count = 36;
-    commands[drawID].instanceCount = 1;
-    commands[drawID].baseInstance = id;
-}
-
-#if 0
-void main()
-{
-    uint id = gl_GlobalInvocationID.x;
-
-    memoryBarrierBuffer();
-
-    if (id >= objects.length())
+    // IMPORTANT: must use real instance count in production
+    if (id >= instances.length())
         return;
 
-    uint drawID = atomicAdd(drawCount, 1);
+    // reset per instance fetch
+    Instance inst = instances[id];
 
-    commands[drawID].count = 36;
-    commands[drawID].instanceCount = 1;
-    commands[drawID].firstIndex = 0;
-    commands[drawID].baseVertex = 0;
-    commands[drawID].baseInstance = id;
+    uint meshID = inst.meshID;
+
+    // safety
+    if (meshID >= boundingSpheres.length())
+        return;
+
+    mat4 vp = projection * view;
+
+    vec4 sphere = boundingSpheres[meshID];
+
+    bool visible = sphereInFrustum(sphere, vp);
+
+    if (visible)
+    {
+        uint drawID = atomicAdd(drawCount, 1);
+
+        commands[drawID].count = 36;          // cube index count
+        commands[drawID].instanceCount = 1;
+        commands[drawID].firstIndex = 0;
+        commands[drawID].baseVertex = 0;
+        commands[drawID].baseInstance = id;
+
+        instanceIndices[drawID] = id;
+    }
 }
 #endif

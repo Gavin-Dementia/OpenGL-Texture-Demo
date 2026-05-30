@@ -106,20 +106,30 @@ int main()
 
     // =======================
     // GPU SYSTEMS
-    SceneUploader scene;
-    VisibilityPipeline visibility;
+    BindingManager binding;
+    SceneUploader uploader;
+    // VisibilityPipeline visibility;
     RendererGPU renderer;
+    VisibilityPass visibility;
+    DrawPass draw;
+    Scene scene;
 
-    scene.init();
+        std::cout << "===== start uploader.init() =====\n";
+    uploader.init();
+        std::cout << "===== start visibility.init() =====\n";
     visibility.init();
+        std::cout << "===== start draw.init() =====\n";
+    draw.init();
+        std::cout << "===== start renderer.init() =====\n";
     renderer.init();
+        std::cout << "===== start while =====\n";
 
     // =======================
     // MESH
     Mesh cube = MeshFactory::createCube();
 
     // =======================
-    // VAO setup (IMPORTANT)
+    // VAO setup
     GLuint vao, vbo, ebo;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -154,18 +164,25 @@ int main()
 
     glBindVertexArray(0);
 
+    SceneInstance inst;
+    inst.mesh = &cube;
+    inst.material = nullptr;
+    inst.transform = glm::mat4(1.0f);
+
+    scene.instances.push_back(inst);
+
     // =======================
     // GPU MESH UPLOAD  
-    MeshDrawData gpuDraw = scene.uploadMesh(cube);
+    MeshDrawData gpuDraw = uploader.uploadMesh(cube);
 
-    scene.uploadDrawData(gpuDraw);
+    uploader.uploadDrawData(gpuDraw);
 
     // std::vector<glm::vec4> bounds;
     // bounds.push_back(glm::vec4(
     //     mesh.boundingCenter,
     //     mesh.boundingRadius
     // ));
-    // scene.uploadMeshBounds(bounds);
+    // uploader.uploadMeshBounds(bounds);
 #if 0
     GPUObjectData objects{};
     objects.transformID = 0;
@@ -208,15 +225,30 @@ int main()
         }
     }
 #endif
-    scene.uploadObjects(objects);
-    scene.uploadTransforms(transforms);
-    // =======================
-    // CAMERA SHADER TEST
-    Shader basicShader = ShaderLoader::loadPass("basic.vert", "basic.frag");
+    std::vector<GPUObjectData> gpuObjects;
+    gpuObjects.reserve(scene.instances.size());
+
+    for (auto& inst : scene.instances)
+    {
+        GPUObjectData obj{};
+
+        obj.transformID = 0;   // or index mapping
+        obj.meshID = 0;        // TODO: map from mesh pointer
+        obj.materialID = 0;
+        obj.visibilityID = 0;
+
+        gpuObjects.push_back(obj);
+    }
+
+    uploader.uploadObjects(gpuObjects);
+    // uploader.uploadObjects(objects);
+    uploader.uploadTransforms(transforms);
+    draw.setVAO(vao);
     // =======================
     // MAIN LOOP
     while (!glfwWindowShouldClose(window))
-    {
+    {for(int i=1 ; i<2; i++)
+        {
         processInput(window, 0.016f);
 
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
@@ -224,34 +256,33 @@ int main()
 
         float aspect = (float)WIDTH / (float)HEIGHT;
 
-        // camera → GPU
-        scene.updateCamera(camera, aspect);
+        uploader.updateCamera(camera, aspect);
 
-        // =======================
-        // GPU PIPELINE
-        visibility.dispatchCulling(scene, 9);
+        std::cout << "===== beforer renderer =====\n";
 
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
-        glFinish();
+        for (int i = 0; i <= 11; i++)
+        {
+            GLint buf = 0;
+            glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, i, &buf);
 
-        GLuint v = 0;
+            std::cout << "binding[" << i << "] = " << buf << "\n";
+        }
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER,
-                    visibility.getCounterBuffer());
+        std::cout << "===== start renderer =====\n";
 
-        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER,
-                            0,
-                            sizeof(GLuint),
-                            &v);
-
-        std::cout << "CPU read = " << v << std::endl;
-
-        // renderer.render(scene, visibility, vao);
-        renderer.render(scene, visibility);
+        renderer.render(
+            scene,
+            uploader,
+            visibility,
+            draw,
+            binding,
+            vao
+        );
 // glBindVertexArray(vao);
 // glDrawArrays(GL_TRIANGLES, 0, 36);
         glfwSwapBuffers(window);
         glfwPollEvents();
+    }break;
     }
 
     glfwTerminate();

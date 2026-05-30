@@ -62,6 +62,9 @@ layout(std430, binding = 5) buffer MaterialBuffer
 layout(std430, binding = 9) buffer DirLightBuffer
 {    DirLightGPU dirLight;  };
 
+layout(std430, binding = 8) buffer VisibilityBuffer
+{    uint instanceIndices[];  };
+
 layout(std430, binding = 10) buffer PointLightBuffer
 {    PointLightGPU pointLights[];  };
 

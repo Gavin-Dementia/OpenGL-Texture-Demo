@@ -58,6 +58,13 @@ build CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj: CXX_COMPILER__mai
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\backend
 
+build CMakeFiles/main.dir/src/gpu/backend/BindingManager.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/backend/BindingManager.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\backend\BindingManager.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\backend
+
 build CMakeFiles/main.dir/src/gpu/upload/SceneUploader.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/upload/SceneUploader.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\gpu\upload\SceneUploader.cpp.obj.d
   FLAGS = -std=gnu++17
@@ -65,8 +72,29 @@ build CMakeFiles/main.dir/src/gpu/upload/SceneUploader.cpp.obj: CXX_COMPILER__ma
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\upload
 
+build CMakeFiles/main.dir/src/gpu/buffers/CounterBuffer.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/buffers/CounterBuffer.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\buffers\CounterBuffer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\buffers
+
+build CMakeFiles/main.dir/src/gpu/buffers/DebugBuffer.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/buffers/DebugBuffer.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\buffers\DebugBuffer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\buffers
+
 build CMakeFiles/main.dir/src/gpu/buffers/DrawBuffer.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/buffers/DrawBuffer.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\gpu\buffers\DrawBuffer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\buffers
+
+build CMakeFiles/main.dir/src/gpu/buffers/InstanceBuffer.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/buffers/InstanceBuffer.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\buffers\InstanceBuffer.cpp.obj.d
   FLAGS = -std=gnu++17
   INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
@@ -113,6 +141,62 @@ build CMakeFiles/main.dir/src/gpu/buffers/TransformBuffer.cpp.obj: CXX_COMPILER_
   INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
   OBJECT_DIR = CMakeFiles\main.dir
   OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\buffers
+
+build CMakeFiles/main.dir/src/gpu/buffers/VisibilityBuffer.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/buffers/VisibilityBuffer.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\buffers\VisibilityBuffer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\buffers
+
+build CMakeFiles/main.dir/src/gpu/debug/GPUDebugValidator.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/debug/GPUDebugValidator.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\debug\GPUDebugValidator.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\debug
+
+build CMakeFiles/main.dir/src/gpu/debug/PipelineStateTracker.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/debug/PipelineStateTracker.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\debug\PipelineStateTracker.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\debug
+
+build CMakeFiles/main.dir/src/gpu/debug/BindingSanityChecker.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/debug/BindingSanityChecker.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\debug\BindingSanityChecker.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\debug
+
+build CMakeFiles/main.dir/src/gpu/debug/BufferInspector.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/debug/BufferInspector.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\debug\BufferInspector.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\debug
+
+build CMakeFiles/main.dir/src/gpu/passes/DrawPass.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/passes/DrawPass.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\passes\DrawPass.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\passes
+
+build CMakeFiles/main.dir/src/gpu/passes/VisibilityPass.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/passes/VisibilityPass.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\passes\VisibilityPass.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\passes
+
+build CMakeFiles/main.dir/src/gpu/pipeline/DrawPipeline.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/pipeline/DrawPipeline.cpp || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\src\gpu\pipeline\DrawPipeline.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -IC:/openGL/glad/include -IC:/openGL/glm -IC:/openGL/glfw-3.4.bin.WIN64/include -IC:/3Dproject/include -IC:/3Dproject/src
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir\src\gpu\pipeline
 
 build CMakeFiles/main.dir/src/gpu/pipeline/VisibilityPipeline.cpp.obj: CXX_COMPILER__main_unscanned_ C$:/3Dproject/src/gpu/pipeline/VisibilityPipeline.cpp || cmake_object_order_depends_target_main
   DEP_FILE = CMakeFiles\main.dir\src\gpu\pipeline\VisibilityPipeline.cpp.obj.d
@@ -170,7 +254,7 @@ build CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj: C_COMPILER__main_unscan
 #############################################
 # Link the executable C:\3Dproject\bin\main.exe
 
-build C$:/3Dproject/bin/main.exe: CXX_EXECUTABLE_LINKER__main_ CMakeFiles/main.dir/src/main.cpp.obj CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj CMakeFiles/main.dir/src/gpu/upload/SceneUploader.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/DrawBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/MaterialBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/MeshBoundsBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/MeshBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/ObjectBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/SSBO.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/TransformBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/pipeline/VisibilityPipeline.cpp.obj CMakeFiles/main.dir/src/graphics/Camera.cpp.obj CMakeFiles/main.dir/src/graphics/Shader.cpp.obj CMakeFiles/main.dir/src/graphics/Texture.cpp.obj CMakeFiles/main.dir/src/scene/Mesh.cpp.obj CMakeFiles/main.dir/src/scene/MeshFactory.cpp.obj CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj
+build C$:/3Dproject/bin/main.exe: CXX_EXECUTABLE_LINKER__main_ CMakeFiles/main.dir/src/main.cpp.obj CMakeFiles/main.dir/src/gpu/backend/RendererGPU.cpp.obj CMakeFiles/main.dir/src/gpu/backend/BindingManager.cpp.obj CMakeFiles/main.dir/src/gpu/upload/SceneUploader.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/CounterBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/DebugBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/DrawBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/InstanceBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/MaterialBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/MeshBoundsBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/MeshBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/ObjectBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/SSBO.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/TransformBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/buffers/VisibilityBuffer.cpp.obj CMakeFiles/main.dir/src/gpu/debug/GPUDebugValidator.cpp.obj CMakeFiles/main.dir/src/gpu/debug/PipelineStateTracker.cpp.obj CMakeFiles/main.dir/src/gpu/debug/BindingSanityChecker.cpp.obj CMakeFiles/main.dir/src/gpu/debug/BufferInspector.cpp.obj CMakeFiles/main.dir/src/gpu/passes/DrawPass.cpp.obj CMakeFiles/main.dir/src/gpu/passes/VisibilityPass.cpp.obj CMakeFiles/main.dir/src/gpu/pipeline/DrawPipeline.cpp.obj CMakeFiles/main.dir/src/gpu/pipeline/VisibilityPipeline.cpp.obj CMakeFiles/main.dir/src/graphics/Camera.cpp.obj CMakeFiles/main.dir/src/graphics/Shader.cpp.obj CMakeFiles/main.dir/src/graphics/Texture.cpp.obj CMakeFiles/main.dir/src/scene/Mesh.cpp.obj CMakeFiles/main.dir/src/scene/MeshFactory.cpp.obj CMakeFiles/main.dir/C_/openGL/glad/src/glad.c.obj
   LINK_LIBRARIES = -lglfw3  -lopengl32  -lgdi32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   LINK_PATH = -LC:/openGL/glfw-3.4.bin.WIN64/lib-mingw-w64
   OBJECT_DIR = CMakeFiles\main.dir

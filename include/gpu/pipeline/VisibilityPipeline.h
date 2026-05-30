@@ -13,27 +13,30 @@ public:
 
     void init();
 
-    void dispatchCulling(
-        SceneUploader& scene,
-        int instanceCount);
+    // void bindBuffers() const;
+    // void bindOutputs(const SceneUploader& scene);
 
-    void bindBuffers() const;
-    void bindInputs(const SceneUploader& scene);
-    void bindOutputs(const SceneUploader& scene);
-
+    // void dispatch(
+    //     SceneUploader& scene,
+    //     int instanceCount);
+    
     void dispatch(
-        SceneUploader& scene,
+        const SceneUploader& scene,
+        DrawBuffer& drawBuffer,
+        GLuint& outDrawCount,
         int instanceCount);
 
-    GLuint getVisibleBuffer() const { return VisibilityBuffer.getID(); }
-    GLuint getCounterBuffer() const { return CounterBuffer.getID(); }
+    // GLuint getVisibleBuffer() const { return visibilityBuffer.getID(); }
+    GLuint getCounterBuffer() const { return counterBuffer.getID(); }
 
-    void runCullCompute(SceneUploader&, Shader&) {}
+private:
+    void bindInputs(const SceneUploader& scene);
+    void bindOutputs(DrawBuffer& drawBuffer);
 
 private:
 
-    SSBO VisibilityBuffer;
-    SSBO CounterBuffer;
+    // SSBO visibilityBuffer;
+    SSBO counterBuffer;
 
     Shader computeProgram;
 };

@@ -1,179 +1,105 @@
 #include "gpu/backend/RendererGPU.h"
+#include "gpu/backend/BindingManager.h"
 #include "gpu/upload/SceneUploader.h"
 #include "gpu/pipeline/VisibilityPipeline.h"
+#include "gpu/pipeline/DrawPipeline.h"
 #include "graphics/Shader.h"
 #include "core/ShaderLoader.h"
+#include "scene/Scene.h"
+#include "gpu/frame/FrameContext.h"
+#include "gpu/passes/DrawPass.h"
+#include "gpu/passes/VisibilityPass.h"
+#include "gpu/layout/Binding.h"
 
 #include <iostream>
 
-#include "gpu/commands/IndirectCommandBuffer.h"
+#include "gpu/commands/DrawElementsIndirectCommandBuffer.h"
 
 void RendererGPU::init()
 {
-    normalShader  = ShaderLoader::loadPass("basic.vert", "basic.frag");
-    computeShader = ShaderLoader::loadCompute("cull.comp");
-    debugShader   = ShaderLoader::loadDebug("indirect_debug.vert", "indirect_debug.frag");
-
     std::cout << "RendererGPU init\n";
 }
 
 void RendererGPU::render(
-    SceneUploader& scene,
-    VisibilityPipeline& visibility,
+    Scene& scene,
+    SceneUploader& uploader,
+    VisibilityPass& visibility,
+    DrawPass& draw,
+    BindingManager& binding,
     GLuint vao)
 {
-    std::cout << "RendererGPU render\n";
-    scene.bindAll();
-    visibility.bindOutputs(scene);
+    FrameContext frame;
 
-    glBindVertexArray(vao);
+    debug.beginFrame();
 
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
-                 scene.getDrawBuffer().getID());
-                 
-    // glBindBuffer(GL_PARAMETER_BUFFER,
-    //              visibility.getCounterBuffer());4.6
+    // GLuint instanceCount = scene.getInstanceCount();
+    GLuint instanceCount = uploader.getInstanceBuffer().size();
+    GLuint groups = (instanceCount + 63) / 64;
+    std::cout << "uploader.getInstanceBuffer().size() = " << instanceCount << std::endl;
+    std::cout << "groups = " << groups << std::endl;
 
-    normalShader.use();
+    tracker.setDispatch(groups);
 
-    // 1. GPU → CPU sync（counter）
-    // glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT |
-    //                 GL_SHADER_STORAGE_BARRIER_BIT);
+    uploader.getCounterBuffer().reset(0);
+    // =========================
+    // 1. COMPUTE BINDING PHASE
+    binding.bindForCompute(uploader);
 
-    // GLuint count = 0;
+    std::cout << "===== SSBO BINDINGS =====\n";
 
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER,
-    //              visibility.getCounterBuffer());
-    // glGetBufferSubData(GL_SHADER_STORAGE_BUFFER,
-    //                     0, 
-    //                     sizeof(GLuint),
-    //                     &count);
-                        
-    // std::cout << "visible count = " << count << std::endl;
-    // if (count == 0)
-    // {
-    //     glBindVertexArray(0);
-    //     return;
-    // }
+    for (int i = 0; i <= 11; i++)
+    {
+        GLint buf = 0;
+        glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, i, &buf);
 
-    // 2. draw
-    glMemoryBarrier(
-        GL_SHADER_STORAGE_BARRIER_BIT |
-        GL_COMMAND_BARRIER_BIT
+        std::cout << "binding[" << i << "] = " << buf << "\n";
+    }
+    
+    // =========================
+    // 2. COMPUTE PASS
+    visibility.execute(
+        scene,
+        uploader,
+        frame.drawCount
     );
 
-    // glMultiDrawElementsIndirectCount(
-    //     GL_TRIANGLES,
-    //     GL_UNSIGNED_INT,
-    //     nullptr,
-    //     0,
-    //     MAX_MESHES,
-    //     0
-    // );4.6
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
+                GL_COMMAND_BARRIER_BIT |
+                GL_BUFFER_UPDATE_BARRIER_BIT);
 
-    glMultiDrawElementsIndirect(
-        GL_TRIANGLES,
-        GL_UNSIGNED_INT,
-        nullptr,
-        1024,
-        0
+    // =========================
+    // 3. VALIDATION AFTER COMPUTE
+    debug.validateComputeDispatch(scene.getInstanceCount());
+
+    tracker.setDrawCount(frame.drawCount);
+    debug.validateDrawCount(frame.drawCount);
+    // =========================
+    // 4. DRAW BINDING PHASE
+    binding.bindForDraw(uploader);
+    draw.setVAO(vao);
+
+    // DrawElementsIndirectCommandBuffer cmd;
+    // glGetBufferSubData(GL_DRAW_INDIRECT_BUFFER, 0, sizeof(cmd), &cmd);
+    // std::cout <<"cmd.count = " << cmd.count << std::endl;
+    // std::cout <<"cmd.instanceCount = " << cmd.instanceCount << std::endl;
+    // std::cout <<"cmd.firstIndex = " << cmd.firstIndex << std::endl;
+    // std::cout <<"cmd.baseVertex = " << cmd.baseVertex << std::endl;
+    // std::cout <<"cmd.baseInstance = " << cmd.baseInstance << std::endl;
+    // std::cout << "frame.drawCount = " << frame.drawCount << "\n";
+    
+    // =========================
+    // 5. INDIRECT DRAW
+    draw.execute(
+        uploader.getDrawBuffer(),
+        frame.drawCount
     );
+    glMemoryBarrier(GL_COMMAND_BARRIER_BIT);
 
-    // std::cout << "draw count = " << count << std::endl;
+    // =========================
+    // 6. FINAL VALIDATION
+    debug.validateIndirectBuffer(uploader.getDrawBuffer().getID());
 
-    glBindVertexArray(0);
-}
-
-void RendererGPU::render(
-    SceneUploader& scene,
-    VisibilityPipeline& visibility)
-{
-    std::cout << "[RendererGPU] render frame\n";
-
-    // ------------------------------------------------------------
-    // 1. Bind ALL GPU buffers (no VAO dependency)
-    scene.bindAll();
-
-    // Visibility pass must output:
-    // - DrawIndirectBuffer (indirect commands)
-    // - Visibility counter (optional)
-    visibility.bindOutputs(scene);
-
-    // ------------------------------------------------------------
-    // 2. Run visibility / culling pipeline (compute shader stage)
-    visibility.dispatch(scene, 9);
-
-    // Memory barrier: ensure compute writes visible to draw stage
-    glMemoryBarrier(
-        GL_SHADER_STORAGE_BARRIER_BIT |
-        GL_COMMAND_BARRIER_BIT
-    );
-
-    // ------------------------------------------------------------
-    // 3. Bind indirect draw buffer
-    const GLuint drawBuffer =
-        scene.getDrawBuffer().getID();
-
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, drawBuffer);
-
-
-    IndirectCommandBuffer cmd;
-glGetBufferSubData(GL_DRAW_INDIRECT_BUFFER, 0, sizeof(cmd), &cmd);
-
-std::cout << cmd.count << std::endl;
-
-
-    // ------------------------------------------------------------
-    // 4. Bind pipeline shader (vertex/fragment)
-    normalShader.use();
-
-    // ------------------------------------------------------------
-    // 5. OPTIONAL: debug / visibility readback (disabled in prod)
-    GLuint visibleCount = 0;
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER,
-                 visibility.getCounterBuffer());
-
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER,
-                        0,
-                        sizeof(GLuint),
-                        &visibleCount);
-
-    std::cout << "visible count = " << visibleCount << "\n";
-
-    if (visibleCount == 0)
-        return;
-
-    // ------------------------------------------------------------
-    // 6. PURE GPU indirect draw
-   
-    // NOTE:
-    // - No VAO
-    // - Assumes vertex fetch from SSBO or global vertex buffer
-    // - Draw commands generated by compute shader
-
-    glMultiDrawElementsIndirect(
-        GL_TRIANGLES,
-        GL_UNSIGNED_INT,
-        nullptr,
-        visibleCount,   // max draws (can be replaced later by GPU counter)
-        0
-    );
-}
-
-void RendererGPU::drawIndirect(
-    GLuint vao,
-    int drawCount)
-{
-    glBindVertexArray(vao);
-
-    glMultiDrawElementsIndirect(
-        GL_TRIANGLES,
-        GL_UNSIGNED_INT,
-        nullptr,
-        drawCount,
-        0);
-
-    glBindVertexArray(0);
+    debug.endFrame();
 }
 
 void RendererGPU::drawIndirect(int drawCount)
@@ -189,24 +115,3 @@ void RendererGPU::drawIndirect(int drawCount)
     );
 }
 
-void RendererGPU::drawIndirectDebug(
-    GLuint vao,
-    VisibilityPipeline& visibility,
-    Shader& debugShader)
-{
-    // debugShader.use();
-
-    // glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
-    //              scene.getDrawBuffer().getID());
-
-    // glBindVertexArray(vao);
-
-    // glMultiDrawElementsIndirect(
-    //     GL_TRIANGLES,
-    //     GL_UNSIGNED_INT,
-    //     nullptr,
-    //     MAX_MESHES,
-    //     0);
-
-    // glBindVertexArray(0);
-}

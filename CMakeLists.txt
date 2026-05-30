@@ -11,18 +11,34 @@ set(SRC_FILES
 
     # GPU pipeline
     src/gpu/backend/RendererGPU.cpp
+    src/gpu/backend/BindingManager.cpp
     src/gpu/upload/SceneUploader.cpp
 
     # buffers
+    src/gpu/buffers/CounterBuffer.cpp
+    src/gpu/buffers/DebugBuffer.cpp
     src/gpu/buffers/DrawBuffer.cpp
+    src/gpu/buffers/InstanceBuffer.cpp
     src/gpu/buffers/MaterialBuffer.cpp
     src/gpu/buffers/MeshBoundsBuffer.cpp
     src/gpu/buffers/MeshBuffer.cpp
     src/gpu/buffers/ObjectBuffer.cpp
     src/gpu/buffers/SSBO.cpp
     src/gpu/buffers/TransformBuffer.cpp
+    src/gpu/buffers/VisibilityBuffer.cpp
+
+    #debug
+    src/gpu/debug/GPUDebugValidator.cpp
+    src/gpu/debug/PipelineStateTracker.cpp
+    src/gpu/debug/BindingSanityChecker.cpp
+    src/gpu/debug/BufferInspector.cpp
+
+    #passes
+    src/gpu/passes/DrawPass.cpp
+    src/gpu/passes/VisibilityPass.cpp
 
     #pipeline
+    src/gpu/pipeline/DrawPipeline.cpp
     src/gpu/pipeline/VisibilityPipeline.cpp
 
     # graphics

@@ -1,1 +1,1 @@
-16:00:55 [INFO] App start
+00:50:04 [INFO] App start

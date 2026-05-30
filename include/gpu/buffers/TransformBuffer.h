@@ -15,7 +15,7 @@ public:
     void upload(const std::vector<GPUTransformData>& transforms);
     void bind() const;
 
-    size_t size() const;
+    GLuint size() const;
 
     GLuint getID() const
     {  return ssbo.getID();  }

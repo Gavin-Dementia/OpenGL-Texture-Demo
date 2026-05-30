@@ -7,7 +7,6 @@
 #include "gpu/buffers/SSBO.h"
 #include "gpu/layout/MeshDrawData.h"
 
-
 class DrawBuffer
 {
 public:
