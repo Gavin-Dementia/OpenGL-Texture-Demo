@@ -3,19 +3,15 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-// #include "gpu/buffers/SSBO.h"
-// #include "gpu/layout/MeshDrawData.h"
-// #include "gpu/layout/GPUTransformData.h"
-// #include "gpu/layout/GPUMaterialData.h"
-// #include "gpu/layout/GPUObjectData.h"
-// #include "scene/Scene.h"
+#include "gpu/buffers/DrawBuffer.h"
+#include "gpu/buffers/MaterialBuffer.h"
+#include "gpu/buffers/MeshBoundsBuffer.h"
+#include "gpu/buffers/MeshBuffer.h"
+#include "gpu/buffers/ObjectBuffer.h"
+#include "gpu/buffers/TransformBuffer.h"
 #include "graphics/Camera.h"
 
-#include "gpu/buffers/ObjectBuffer.h"
-#include "gpu/buffers/MaterialBuffer.h"
-#include "gpu/buffers/TransformBuffer.h"
-#include "gpu/buffers/DrawBuffer.h"
-#include "gpu/buffers/MeshBoundsBuffer.h"
+#include "scene/Mesh.h"
 
 class SceneUploader
 {
@@ -38,12 +34,15 @@ public:
     void uploadMaterials(const GPUMaterialData& material);
     void uploadMeshBounds(const std::vector<glm::vec4>& bounds);
     void uploadMeshBounds(const glm::vec4& bound);
+    MeshDrawData uploadMesh(const Mesh& mesh);
+
+    // uint32_t uploadMesh(const Mesh& mesh);
 
     // per-frame upload
-    void uploadTransforms(const std::vector<GPUTransformData>& transforms);
-    void uploadTransforms(const GPUTransformData& transform);
     void uploadObjects(const std::vector<GPUObjectData>& objects);
     void uploadObjects(const GPUObjectData& obj);
+    void uploadTransforms(const std::vector<GPUTransformData>& transforms);
+    void uploadTransforms(const GPUTransformData& transform);
 
     // CAMERA (IMPORTANT)
     void updateCamera(const Camera& cam, float aspect);
@@ -51,11 +50,12 @@ public:
     // bind all SSBOs
     void bindAll() const;
 
-    const ObjectBuffer& getObjectBuffer() const { return objectBuffer; }
-    const MaterialBuffer& getMaterialBuffer() const { return materialBuffer; }
-    const TransformBuffer& getTransformBuffer() const { return transformBuffer; }
     const DrawBuffer& getDrawBuffer() const { return drawBuffer; }
+    const MaterialBuffer& getMaterialBuffer() const { return materialBuffer; }
     const MeshBoundsBuffer& getMeshBoundsBuffer() const { return meshBoundsBuffer; }
+    const MeshBuffer& getMeshBuffer() const { return meshBuffer; }
+    const ObjectBuffer& getObjectBuffer() const { return objectBuffer; }
+    const TransformBuffer& getTransformBuffer() const { return transformBuffer; }
 
     GLuint getCameraUBO() const { return cameraUBO; }
     GLuint getGlobalVAO() const { return 0; }
@@ -72,9 +72,10 @@ private:
 
     DrawBuffer drawBuffer;
     MaterialBuffer materialBuffer;
-    TransformBuffer transformBuffer;
-    ObjectBuffer objectBuffer;
     MeshBoundsBuffer meshBoundsBuffer;
+    MeshBuffer meshBuffer;
+    ObjectBuffer objectBuffer;
+    TransformBuffer transformBuffer;
 };
 
 

@@ -21,6 +21,10 @@ public:
     void bindInputs(const SceneUploader& scene);
     void bindOutputs(const SceneUploader& scene);
 
+    void dispatch(
+        SceneUploader& scene,
+        int instanceCount);
+
     GLuint getVisibleBuffer() const { return VisibilityBuffer.getID(); }
     GLuint getCounterBuffer() const { return CounterBuffer.getID(); }
 

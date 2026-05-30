@@ -51,6 +51,39 @@ void VisibilityPipeline::bindOutputs(const SceneUploader& scene)
                      CounterBuffer.getID());
 }
 
+void VisibilityPipeline::dispatch(
+    SceneUploader& scene,
+    int instanceCount)
+{
+    bindInputs(scene);
+    bindOutputs(scene);
+
+    computeProgram.use();
+
+    // reset counter
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER,
+                 CounterBuffer.getID());
+
+    GLuint zero = 0;
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER,
+                    0,
+                    sizeof(GLuint),
+                    &zero);
+
+    // dispatch compute
+    GLuint groupSize = 64;
+    GLuint groups = (instanceCount + groupSize - 1) / groupSize;
+        std::cout << "instanceCount = " << instanceCount << std::endl;
+        std::cout << "groups = " << groups << std::endl;
+    glDispatchCompute(groups, 1, 1);
+
+    glMemoryBarrier(
+        GL_SHADER_STORAGE_BARRIER_BIT |
+        GL_COMMAND_BARRIER_BIT
+    );
+}
+
+
 void VisibilityPipeline::dispatchCulling(
     SceneUploader& gpuScene,
     int instanceCount)

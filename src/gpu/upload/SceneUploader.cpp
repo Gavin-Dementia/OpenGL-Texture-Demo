@@ -10,6 +10,7 @@ void SceneUploader::init()
     transformBuffer.init();
     objectBuffer.init();
     meshBoundsBuffer.init();
+    meshBuffer.init();
 
     // CAMERA UBO 
     glGenBuffers(1, &cameraUBO);
@@ -37,6 +38,17 @@ void SceneUploader::uploadMeshBounds(const std::vector<glm::vec4>& bounds)
 void SceneUploader::uploadMeshBounds(const glm::vec4& bound)
 {    uploadMeshBounds(std::vector<glm::vec4>{bound});  }
 
+MeshDrawData SceneUploader::uploadMesh(const Mesh& mesh)
+{
+    MeshDrawData draw= meshBuffer.uploadMesh(mesh);
+
+    uploadDrawData(draw);
+
+    return draw;
+}
+// uint32_t SceneUploader::uploadMesh(const Mesh& mesh)
+// {    return meshBuffer.uploadMesh(mesh.vertices, mesh.indices);  }
+
 void SceneUploader::uploadTransforms(const std::vector<GPUTransformData>& transforms)
 {    transformBuffer.upload(transforms);  }
 
@@ -63,10 +75,11 @@ void SceneUploader::updateCamera(const Camera& cam, float aspect)
 
 void SceneUploader::bindAll() const
 {
-    // drawBuffer.bind();
+    // drawBuffer.bind(); //
     materialBuffer.bind();
-    transformBuffer.bind();
-    objectBuffer.bind();
     meshBoundsBuffer.bind();
+    meshBuffer.bind();
+    objectBuffer.bind();
+    transformBuffer.bind();
 }
 

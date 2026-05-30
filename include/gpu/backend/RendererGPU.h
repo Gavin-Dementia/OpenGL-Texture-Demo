@@ -17,12 +17,18 @@ public:
         VisibilityPipeline& visibility,
         GLuint vao);
 
+    void render(
+        SceneUploader& scene,
+        VisibilityPipeline& visibility);
+
     void setDebugDraw(bool enable) { debugDraw = enable; }
 
 private:
     void drawIndirect(
         GLuint vao,
         int drawCount);
+
+    void drawIndirect(int drawCount);
 
     void drawIndirectDebug(
         GLuint vao,
@@ -33,6 +39,7 @@ private:
 
     Shader normalShader;
     Shader debugShader;
+    Shader computeShader;
 
     bool debugDraw = true;
     static constexpr int MAX_MESHES = 10000;

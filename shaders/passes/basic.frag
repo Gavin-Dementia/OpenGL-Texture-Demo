@@ -1,21 +1,18 @@
 #version 430 core
 
 // =========================
-// Inputs from vertex shader
+// Inputs
+
+flat in uint vInstanceID;
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
 in vec4 vDebugColor;
 
-// instance index (from indirect draw / vertex shader passthrough)
-flat in uint instanceID;
-
-// =========================
-// Output
 out vec4 FragColor;
 
 // =========================
-// GPU Scene Buffers
+// Data structures
 
 struct Instance
 {
@@ -50,32 +47,27 @@ struct PointLightGPU
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
-    vec4 params; // x=constant y=linear z=quadratic w=intensity
+    vec4 params;
 };
 
 // =========================
-// SSBO bindings
+// SSBOs
 
 layout(std430, binding = 3) buffer InstanceBuffer
-{    Instance instances[];    };
+{    Instance instances[];  };
 
 layout(std430, binding = 5) buffer MaterialBuffer
-{    Material materials[];    };
-
-#define NR_POINT_LIGHTS 16
+{    Material materials[];  };
 
 layout(std430, binding = 9) buffer DirLightBuffer
-{    DirLightGPU dirLight;    };
+{    DirLightGPU dirLight;  };
 
-layout(std430, binding = 10) buffer PointLights
-{    PointLightGPU pointLights[];    };
-
-// =========================
-// Textures (global bindless-style array)
-layout(binding = 0) uniform sampler2D textures[32];
+layout(std430, binding = 10) buffer PointLightBuffer
+{    PointLightGPU pointLights[];  };
 
 // =========================
-// Camera (UBO)
+// Camera
+
 layout(std140, binding = 0) uniform CameraUBO
 {
     mat4 view;
@@ -84,120 +76,77 @@ layout(std140, binding = 0) uniform CameraUBO
 };
 
 // =========================
-// Shadow
-uniform sampler2D shadowMap;
-uniform mat4 lightSpaceMatrix;
+// Textures
 
-// =========================
-// Helpers
-float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
-{
-    vec3 proj = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    proj = proj * 0.5 + 0.5;
-
-    if (proj.x < 0.0 || proj.x > 1.0 ||
-        proj.y < 0.0 || proj.y > 1.0)
-        return 0.0;
-
-    float closestDepth = texture(shadowMap, proj.xy).r;
-    float currentDepth = proj.z;
-
-    float bias = max(0.0005, 0.005 * (1.0 - dot(normal, lightDir)));
-
-    return currentDepth - bias > closestDepth ? 1.0 : 0.0;
-}
+layout(binding = 0) uniform sampler2D textures[32];
 
 // =========================
 // Lighting
-vec3 CalcDirLight(vec3 normal, vec3 viewDir, vec3 diffuse, vec3 specular, Material mat)
+
+vec3 CalcDirLight(vec3 N, vec3 V, vec3 diffuse, vec3 specular, Material mat)
 {
-    vec3 lightDir = normalize(-dirLight.direction.xyz);
+    vec3 L = normalize(-dirLight.direction.xyz);
 
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(N, L), 0.0);
+    vec3 R = reflect(-L, N);
+    float spec = pow(max(dot(V, R), 0.0), mat.shininess);
 
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat.shininess);
-
-    float shadow = 0.0; // optional: pass fragPosLightSpace if needed
-
-    vec3 ambient = dirLight.ambient.xyz * diffuse;
-    vec3 diffuseC = dirLight.diffuse.xyz * diff * diffuse;
-    vec3 specularC = dirLight.specular.xyz * spec * specular;
-
-    return ambient + diffuseC + specularC;
+    return dirLight.ambient.xyz * diffuse +
+           dirLight.diffuse.xyz * diff * diffuse +
+           dirLight.specular.xyz * spec * specular;
 }
 
-vec3 CalcPointLight(PointLightGPU light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuse, vec3 specular, Material mat)
+vec3 CalcPointLight(PointLightGPU light, vec3 N, vec3 P, vec3 V, vec3 diffuse, vec3 specular, Material mat)
 {
-    vec3 lightDir = normalize(light.position.xyz - fragPos);
+    vec3 L = normalize(light.position.xyz - P);
 
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(N, L), 0.0);
+    vec3 R = reflect(-L, N);
+    float spec = pow(max(dot(V, R), 0.0), mat.shininess);
 
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat.shininess);
+    float d = length(light.position.xyz - P);
 
-    float distance = length(light.position.xyz - fragPos);
-
-    float attenuation = 1.0 / (
+    float att = 1.0 / (
         light.params.x +
-        light.params.y * distance +
-        light.params.z * distance * distance
+        light.params.y * d +
+        light.params.z * d * d
     );
 
-    vec3 ambient = light.ambient.xyz * diffuse;
-    vec3 diffuseC = light.diffuse.xyz * diff * diffuse;
-    vec3 specularC = light.specular.xyz * spec * specular;
+    vec3 result =
+        light.ambient.xyz * diffuse +
+        light.diffuse.xyz * diff * diffuse +
+        light.specular.xyz * spec * specular;
 
-    return (ambient + diffuseC + specularC) * attenuation;
+    return result * att;
 }
 
-// =========================
-// MAIN
 void main()
 {
-    // -------------------------
-    // Fetch instance
-    Instance inst = instances[instanceID];
+    Instance inst = instances[vInstanceID];
     Material mat = materials[inst.materialID];
 
-    // -------------------------
-    // Texture fetch
     vec3 diffuseTex = texture(textures[mat.diffuseTex], TexCoords).rgb;
     vec3 specularTex = texture(textures[mat.specularTex], TexCoords).rgb;
 
     vec3 N = normalize(Normal);
     vec3 V = normalize(viewPos.xyz - FragPos);
 
-    vec3 result = vec3(0.0);
+    vec3 color = vec3(0.0);
 
-    // -------------------------
-    // Directional light
-    result += CalcDirLight(N, V, diffuseTex, specularTex, mat);
+    color += CalcDirLight(N, V, diffuseTex, specularTex, mat);
 
-    // -------------------------
-    // Point lights
-    for (int i = 0; i < NR_POINT_LIGHTS; i++)
+    for (int i = 0; i < 16; i++)
     {
-        if (pointLights[i].params.w <= 0.0)
-            continue;
+        if (pointLights[i].params.w <= 0.0) continue;
 
-        result += CalcPointLight(
-            pointLights[i],
-            N,
-            FragPos,
-            V,
-            diffuseTex,
-            specularTex,
-            mat
-        );
+        color += CalcPointLight(pointLights[i],
+                                N, FragPos, V,
+                                diffuseTex, specularTex, mat);
     }
 
-    // -------------------------
-    // Emissive
-    result += mat.emissiveColor.xyz;
+    color += mat.emissiveColor.xyz;
 
-    //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    FragColor = vec4(result+0.5, 1.0);
-    //FragColor = vDebugColor;
+    //FragColor = vec4(color, 1.0);
+FragColor = vec4(1,0,0,1);
 }
 

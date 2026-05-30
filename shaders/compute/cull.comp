@@ -35,7 +35,7 @@ layout(std430, binding = 4) buffer DrawBuffer
 {    IndirectCommandBuffer commands[];    };
 
 layout(std430, binding = 6) buffer CounterBuffer
-{    uint drawCount;    }counter;
+{    uint drawCount;    };
 
 layout(std430, binding = 7) buffer DebugBuffer
 {    vec4 debugColor[];     };// per instance
@@ -67,20 +67,12 @@ void main()
 {
     uint id = gl_GlobalInvocationID.x;
 
-    if (id == 0)
-        counter.drawCount = 0;
+    if (id >= 9) return;
 
-    memoryBarrierBuffer();
-
-    if (id >= objects.length())
-        return;
-
-    uint drawID = atomicAdd(counter.drawCount, 1);
+    uint drawID = atomicAdd(drawCount, 1);
 
     commands[drawID].count = 36;
     commands[drawID].instanceCount = 1;
-    commands[drawID].firstIndex = 0;
-    commands[drawID].baseVertex = 0;
     commands[drawID].baseInstance = id;
 }
 
@@ -89,13 +81,17 @@ void main()
 {
     uint id = gl_GlobalInvocationID.x;
 
-    if (id == 0)
-        counter.drawCount = 9;
+    memoryBarrierBuffer();
 
-    commands[id].count = 36;
-    commands[id].instanceCount = 1;
-    commands[id].firstIndex = 0;
-    commands[id].baseVertex = 0;
-    commands[id].baseInstance = id;
+    if (id >= objects.length())
+        return;
+
+    uint drawID = atomicAdd(drawCount, 1);
+
+    commands[drawID].count = 36;
+    commands[drawID].instanceCount = 1;
+    commands[drawID].firstIndex = 0;
+    commands[drawID].baseVertex = 0;
+    commands[drawID].baseInstance = id;
 }
 #endif

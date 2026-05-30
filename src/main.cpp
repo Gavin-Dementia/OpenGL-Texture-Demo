@@ -155,12 +155,8 @@ int main()
     glBindVertexArray(0);
 
     // =======================
-    // GPU MESH UPLOAD
-    MeshDrawData gpuDraw{};
-    gpuDraw.vertexOffset = 0;
-    gpuDraw.indexOffset = 0;
-    gpuDraw.vertexCount = cube.vertices.size();
-    gpuDraw.indexCount = cube.indices.size();
+    // GPU MESH UPLOAD  
+    MeshDrawData gpuDraw = scene.uploadMesh(cube);
 
     scene.uploadDrawData(gpuDraw);
 
@@ -170,7 +166,7 @@ int main()
     //     mesh.boundingRadius
     // ));
     // scene.uploadMeshBounds(bounds);
-#if 1
+#if 0
     GPUObjectData objects{};
     objects.transformID = 0;
     objects.meshID = 0;
@@ -250,8 +246,10 @@ int main()
 
         std::cout << "CPU read = " << v << std::endl;
 
-        renderer.render(scene, visibility, vao);
-
+        // renderer.render(scene, visibility, vao);
+        renderer.render(scene, visibility);
+// glBindVertexArray(vao);
+// glDrawArrays(GL_TRIANGLES, 0, 36);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

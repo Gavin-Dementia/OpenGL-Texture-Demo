@@ -1,9 +1,12 @@
 #ifndef MESH_BUFFER_H
 #define MESH_BUFFER_H
 
+#include <vector>
+
 #include "gpu/buffers/SSBO.h"
 #include "gpu/layout/Vertex.h"
-#include <vector>
+#include "gpu/layout/MeshDrawData.h"
+#include "scene/Mesh.h"
 
 struct GPUMeshData
 {
@@ -18,8 +21,10 @@ class MeshBuffer
 public:
 
     void init();
-    uint32_t uploadMesh(const std::vector<Vertex>& vertices,
-                        const std::vector<uint32_t>& indices);
+    // uint32_t uploadMesh(const std::vector<Vertex>& vertices,
+    //                     const std::vector<uint32_t>& indices);
+
+    MeshDrawData uploadMesh(const Mesh& mesh);
 
     const GPUMeshData& getMesh(uint32_t meshID) const;
 
@@ -34,6 +39,8 @@ private:
 
     uint32_t vertexCursor = 0;
     uint32_t indexCursor = 0;
+    uint32_t vertexOffset = 0;
+    uint32_t indexOffset = 0;
 };
 
 #endif  // MESH_BUFFER_H
