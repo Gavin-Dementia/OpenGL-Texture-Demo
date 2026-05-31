@@ -1,33 +1,29 @@
 #include "gpu/passes/DrawPass.h"
 #include "gpu/buffers/DrawBuffer.h"
+#include "gpu/buffers/CounterBuffer.h"
 #include "core/ShaderLoader.h"
+#include "graphics/Shader.h"
 
-#include <glad/glad.h>
+#include <iostream>
 
 void DrawPass::init()
 {
     shader = ShaderLoader::loadPass("basic.vert", "basic.frag");
 }
 
-void DrawPass::setVAO(GLuint inVao)
+void DrawPass::bind(GLuint vao_,
+                    const DrawBuffer& drawBuffer,
+                    const CounterBuffer& counterBuffer)
 {
-    vao = inVao;
+    vao = vao_;
+    drawBufferID = drawBuffer.getID();
+    counterBufferID = counterBuffer.getID();
 }
 
-void DrawPass::execute(
-    const DrawBuffer& drawBuffer,
-    GLuint drawCount)
+void DrawPass::execute(GLuint drawCount)
 {
-    if (drawCount == 0) return;
-
     shader.use();
     glBindVertexArray(vao);
-
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, drawBuffer.getID());
-
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
-                GL_COMMAND_BARRIER_BIT |
-                GL_BUFFER_UPDATE_BARRIER_BIT);
 
     glMultiDrawElementsIndirect(
         GL_TRIANGLES,

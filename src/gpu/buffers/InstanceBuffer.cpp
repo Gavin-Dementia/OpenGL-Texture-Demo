@@ -16,7 +16,7 @@ void InstanceBuffer::upload(const Instance* data, size_t count_)
 }
 
 void InstanceBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::InstanceBuffer); }
+{    ssbo.bindBase(Binding::InstanceBuffer); }
 
 GLuint InstanceBuffer::getID() const
 {    return ssbo.getID();  }

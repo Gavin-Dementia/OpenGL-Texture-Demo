@@ -5,22 +5,32 @@
 #include "graphics/Shader.h"
 
 class DrawBuffer;
+class CounterBuffer;
+class Shader;
 
 class DrawPass
 {
 public:
-
     void init();
-    void setVAO(GLuint vao);
 
-    void execute(
-        const DrawBuffer& drawBuffer,
-        GLuint drawCount);
+    // bind GPU resources once per frame (optional)
+    void bind(GLuint vao,
+              const DrawBuffer& drawBuffer,
+              const CounterBuffer& counterBuffer);
+
+    // GPU-driven draw (no CPU drawCount)
+    void execute(GLuint drawCount);
 
 private:
-
     Shader shader;
+
     GLuint vao = 0;
+    GLuint drawBufferID = 0;
+    GLuint counterBufferID = 0;
+
+    // cached state (optional debug)
+    GLuint lastDrawCount = 0;
 };
 
-#endif // DRAW_PASS_H
+#endif
+

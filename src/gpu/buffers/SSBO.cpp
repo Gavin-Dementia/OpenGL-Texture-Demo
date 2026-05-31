@@ -40,15 +40,12 @@ void SSBO::upload(
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
 
-    glBufferData(GL_SHADER_STORAGE_BUFFER,
-                bufferSize,
-                nullptr,
-                GL_DYNAMIC_DRAW); // orphan
-
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER,
-                    offset,
-                    size,
-                    data);
+    glBufferSubData(
+        GL_SHADER_STORAGE_BUFFER,
+        offset,
+        size,
+        data
+    );
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }

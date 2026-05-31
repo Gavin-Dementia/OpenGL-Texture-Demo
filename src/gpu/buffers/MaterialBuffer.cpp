@@ -21,7 +21,7 @@ void MaterialBuffer::upload(
 }
 
 void MaterialBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::MaterialBuffer);  }
+{    ssbo.bindBase(Binding::MaterialBuffer);  }
 
 size_t MaterialBuffer::size() const
 {    return ssbo.getSize() / sizeof(GPUMaterialData);  }

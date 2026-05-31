@@ -92,7 +92,7 @@ const GPUMeshData& MeshBuffer::getMesh(uint32_t meshID) const
 
 void MeshBuffer::bind() const
 {
-    vertexBuffer.bindBase(Binding::SSBO::MeshBoundsBuffer); 
-    indexBuffer.bindBase(Binding::SSBO::InstanceBuffer);
+    vertexBuffer.bindBase(Binding::MeshBoundsBuffer); 
+    indexBuffer.bindBase(Binding::InstanceBuffer);
 }
 

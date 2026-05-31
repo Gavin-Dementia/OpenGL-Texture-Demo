@@ -21,7 +21,7 @@ void DrawBuffer::upload(
 }
 
 void DrawBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::DrawBuffer);  }
+{    ssbo.bindBase(Binding::DrawBuffer);  }
 
 size_t DrawBuffer::size() const
 {    return ssbo.getSize() / sizeof(MeshDrawData);  }

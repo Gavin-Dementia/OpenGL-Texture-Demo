@@ -3,7 +3,7 @@
 layout(local_size_x = 64) in;
 
 // =========================
-// INSTANCE DATA
+// DATA STRUCTS
 
 struct Instance
 {
@@ -14,16 +14,16 @@ struct Instance
 };
 
 // =========================
-// BUFFERS (MATCH YOUR BINDINGS)
-
-layout(std430, binding = 2) buffer MeshBoundsBuffer
-{
-    vec4 boundingSpheres[];
-};
+// BUFFERS
 
 layout(std430, binding = 3) buffer InstanceBuffer
 {
     Instance instances[];
+};
+
+layout(std430, binding = 2) buffer MeshBoundsBuffer
+{
+    vec4 boundingSpheres[];
 };
 
 layout(std430, binding = 6) buffer CounterBuffer
@@ -66,15 +66,12 @@ void main()
 {
     uint id = gl_GlobalInvocationID.x;
 
-    // =========================================================
-    // IMPORTANT: use CPU-uploaded instanceCount
     if (id >= counter.instanceCount)
         return;
 
     Instance inst = instances[id];
 
     uint meshID = inst.meshID;
-
     if (meshID >= boundingSpheres.length())
         return;
 
@@ -82,13 +79,9 @@ void main()
 
     vec4 sphere = boundingSpheres[meshID];
 
-    bool visible = visibleTest(sphere, vp);
-
-    if (!visible)
+    if (!visibleTest(sphere, vp))
         return;
 
-    // =========================================================
-    // COMPACT WRITE (ATOMIC)
     uint visibleID = atomicAdd(counter.drawCount, 1u);
 
     instanceIndices[visibleID] = id;

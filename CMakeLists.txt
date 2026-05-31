@@ -36,6 +36,7 @@ set(SRC_FILES
     #passes
     src/gpu/passes/DrawPass.cpp
     src/gpu/passes/VisibilityPass.cpp
+    src/gpu/passes/CommandBuilderPass.cpp
 
     #pipeline
     src/gpu/pipeline/DrawPipeline.cpp

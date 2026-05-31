@@ -3,7 +3,8 @@
 
 #include <glad/glad.h>
 #include "graphics/Shader.h"
-#include "gpu/buffers/SSBO.h"   
+#include "gpu/buffers/SSBO.h"  
+#include "gpu/frame/FrameContext.h" 
 
 class SceneUploader;
 class DrawBuffer;
@@ -16,15 +17,11 @@ public:
 
     void init();
 
-    void execute(
-        Scene& scene,
-        SceneUploader& uploader,
-        GLuint& outDrawCount);
+    void execute(FrameContext& frame, Scene& scene);
 
 private:
 
     Shader computeProgram;
-    
 };
 
 #endif // VISIBILITY_PASS_H

@@ -11,91 +11,52 @@ void BindingManager::bindSSBO(GLuint binding, GLuint buffer)
 
 void BindingManager::bindFrame(const SceneUploader& scene)
 {
-    bindSSBO(Binding::ObjectBuffer,
-             scene.getObjectBuffer().getID());
+    bindSSBO(Binding::ObjectBuffer,     scene.getObjectBuffer().getID());
+    bindSSBO(Binding::TransformBuffer,  scene.getTransformBuffer().getID());
+    bindSSBO(Binding::MeshBoundsBuffer, scene.getMeshBoundsBuffer().getID());
+    bindSSBO(Binding::InstanceBuffer,   scene.getInstanceBuffer().getID());
+    bindSSBO(Binding::MaterialBuffer,   scene.getMaterialBuffer().getID());
 
-    bindSSBO(Binding::TransformBuffer,
-             scene.getTransformBuffer().getID());
-
-    bindSSBO(Binding::MeshBoundsBuffer,
-             scene.getMeshBoundsBuffer().getID());
-
-    bindSSBO(Binding::InstanceBuffer,
-             scene.getInstanceBuffer().getID());
-
-    bindSSBO(Binding::MaterialBuffer,
-             scene.getMaterialBuffer().getID());
-
-    bindSSBO(Binding::DebugBuffer,
-             scene.getDebugBuffer().getID());
-
-std::cout << "==== BUFFER bindFrame ====\n";
-
-std::cout << "ObjectBuffer     = "
-          << scene.getObjectBuffer().getID() << "\n";
-
-std::cout << "TransformBuffer  = "
-          << scene.getTransformBuffer().getID() << "\n";
-
-std::cout << "InstanceBuffer   = "
-          << scene.getInstanceBuffer().getID() << "\n";
-
-std::cout << "MaterialBuffer   = "
-          << scene.getMaterialBuffer().getID() << "\n";
-
-std::cout << "CounterBuffer    = "
-          << scene.getCounterBuffer().getID() << "\n";
-
-std::cout << "VisibilityBuffer = "
-          << scene.getVisibilityBuffer().getID() << "\n";
-
-std::cout << "DrawBuffer       = "
-          << scene.getDrawBuffer().getID() << "\n";
+    bindSSBO(Binding::DebugBuffer,      scene.getDebugBuffer().getID());
 }
 
 void BindingManager::bindForCompute(const SceneUploader& scene)
 {
     bindFrame(scene);
 
-    bindSSBO(Binding::CounterBuffer,
-             scene.getCounterBuffer().getID());
-
-    bindSSBO(Binding::VisibilityBuffer,
-             scene.getVisibilityBuffer().getID());
-
-    bindSSBO(Binding::DrawBuffer,
-             scene.getDrawBuffer().getID());
-
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
-                 scene.getDrawBuffer().getID());
-
-    std::cout << "==== BUFFER bindForCompute ====\n";
-
-    std::cout << "CounterBuffer    = "
-              << scene.getCounterBuffer().getID() << "\n";
-
-    std::cout << "VisibilityBuffer = "
-              << scene.getVisibilityBuffer().getID() << "\n";
-
-    std::cout << "DrawBuffer       = "
-              << scene.getDrawBuffer().getID() << "\n";
-
-
+    bindSSBO(Binding::CounterBuffer,    scene.getCounterBuffer().getID());
+    bindSSBO(Binding::VisibilityBuffer, scene.getVisibilityBuffer().getID());
+    bindSSBO(Binding::DrawBuffer,       scene.getDrawBuffer().getID());
 }
 
 void BindingManager::bindForDraw(const SceneUploader& scene)
 {
     bindFrame(scene);
 
-    bindSSBO(Binding::VisibilityBuffer,
-             scene.getVisibilityBuffer().getID());
+    bindSSBO(Binding::VisibilityBuffer,  scene.getVisibilityBuffer().getID());
 
-    bindSSBO(Binding::DrawBuffer,
-             scene.getDrawBuffer().getID());
-
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER,
-                 scene.getDrawBuffer().getID());
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER,scene.getDrawBuffer().getID());
 }
+
+void BindingManager::bindForVisibility(
+    const SceneUploader& scene)
+{
+    bindFrame(scene);
+
+    bindSSBO( Binding::CounterBuffer,    scene.getCounterBuffer().getID());
+    bindSSBO( Binding::VisibilityBuffer, scene.getVisibilityBuffer().getID());
+}
+
+void BindingManager::bindForCommandBuilder(
+    const SceneUploader& scene)
+{
+    bindSSBO( Binding::CounterBuffer,   scene.getCounterBuffer().getID());
+    bindSSBO( Binding::VisibilityBuffer,scene.getVisibilityBuffer().getID());
+    bindSSBO( Binding::DrawBuffer,      scene.getDrawBuffer().getID());
+}
+
+
+
 
 void BindingManager::reset()
 {

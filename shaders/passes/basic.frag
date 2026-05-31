@@ -149,7 +149,7 @@ void main()
 
     color += mat.emissiveColor.xyz;
 
-    //FragColor = vec4(color, 1.0);
-FragColor = vec4(1,0,0,1);
+    FragColor = vec4(color, 1.0);
+//FragColor = vec4(1,0,0,1);
 }
 

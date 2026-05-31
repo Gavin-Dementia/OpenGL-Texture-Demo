@@ -13,6 +13,8 @@ public:
 
     void bindForCompute(const SceneUploader& scene);
     void bindForDraw(const SceneUploader& scene);
+    void bindForVisibility( const SceneUploader& scene);
+    void bindForCommandBuilder( const SceneUploader& scene);
 
     void reset();
 

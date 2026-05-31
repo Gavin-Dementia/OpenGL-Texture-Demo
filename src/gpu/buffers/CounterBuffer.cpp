@@ -3,19 +3,41 @@
 
 void CounterBuffer::init()
 {
-    GLuint zero = 0;
-    ssbo.create(sizeof(GLuint));
-    ssbo.upload(&zero, sizeof(GLuint));
+    ssbo.create(sizeof(GPUCounter));
+    GPUCounter zero{};
+    ssbo.upload(&zero, sizeof(GPUCounter));
 }
 
-void CounterBuffer::reset(GLuint value)
+void CounterBuffer::reset()
 {
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint), &value);
+    GPUCounter zero{};
+    zero.drawCount = 0;
+    zero.instanceCount = 0;
+
+    ssbo.upload(&zero, sizeof(GPUCounter));
 }
+
 void CounterBuffer::bind() const
-{     ssbo.bindBase(Binding::SSBO::CounterBuffer);  }
+{     ssbo.bindBase(Binding::CounterBuffer);  }
 
 GLuint CounterBuffer::getID() const
 {    return ssbo.getID(); }
 
+void CounterBuffer::uploadInstanceCount(GLuint count)
+{
+    GPUCounter data{};
+    data.drawCount = 0;
+    data.instanceCount = count;
+
+    ssbo.upload(&data, sizeof(GPUCounter));
+}
+
+GLuint CounterBuffer::read() const
+{
+    GPUCounter data{};
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo.getID());
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GPUCounter), &data);
+
+    return data.drawCount;
+}

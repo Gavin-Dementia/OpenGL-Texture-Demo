@@ -14,7 +14,7 @@ void VisibilityBuffer::clear()
 }
 
 void VisibilityBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::VisibilityBuffer);  }
+{    ssbo.bindBase(Binding::VisibilityBuffer);  }
 
 GLuint VisibilityBuffer::getID() const
 {    return ssbo.getID();  }

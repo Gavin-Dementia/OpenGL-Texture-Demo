@@ -81,56 +81,95 @@ int main()
     Logger::init();
     Logger::info("App start");
 
-    // =======================
-    // GLFW init
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // =========================================================
+    // 1. INIT CONTEXT (GLFW + GLAD)
+    GLFWwindow* window = nullptr;
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "GPU Driven", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
-
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "GLAD failed\n";
-        return -1;
+        glfwInit();
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "GPU Driven", nullptr, nullptr);
+        glfwMakeContextCurrent(window);
+
+        glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+        glfwSetCursorPosCallback(window, mouse_callback);
+        glfwSetScrollCallback(window, scroll_callback);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        {
+            std::cout << "GLAD failed\n";
+            return -1;
+        }
+
+        glEnable(GL_DEPTH_TEST);
     }
 
-    glEnable(GL_DEPTH_TEST);
-
-    // =======================
-    // GPU SYSTEMS
+    // =========================================================
+    // 2. ENGINE SYSTEMS INIT
     BindingManager binding;
     SceneUploader uploader;
-    // VisibilityPipeline visibility;
+
     RendererGPU renderer;
     VisibilityPass visibility;
     DrawPass draw;
+
     Scene scene;
 
-        std::cout << "===== start uploader.init() =====\n";
+    std::cout << "===== init uploader =====\n";
     uploader.init();
-        std::cout << "===== start visibility.init() =====\n";
-    visibility.init();
-        std::cout << "===== start draw.init() =====\n";
-    draw.init();
-        std::cout << "===== start renderer.init() =====\n";
-    renderer.init();
-        std::cout << "===== start while =====\n";
 
-    // =======================
-    // MESH
+    std::cout << "===== init visibility =====\n";
+    visibility.init();
+
+    std::cout << "===== init draw =====\n";
+    draw.init();
+
+    std::cout << "===== init renderer =====\n";
+    renderer.init();
+
+    std::cout << "===== init done =====\n";
+
+    // =========================================================
+    // 3. SCENE BUILD (CPU SIDE ONLY)
     Mesh cube = MeshFactory::createCube();
 
-    // =======================
-    // VAO setup
-    GLuint vao, vbo, ebo;
+    SceneInstance inst;
+    inst.mesh = &cube;
+    inst.transform = glm::mat4(1.0f);
+    inst.material = nullptr;
+
+    scene.instances.push_back(inst);
+
+    // =========================================================
+    // 4. GPU UPLOAD PHASE
+    MeshDrawData gpuDraw = uploader.uploadMesh(cube);
+    uploader.uploadDrawData(gpuDraw);
+
+    std::vector<GPUObjectData> gpuObjects;
+    gpuObjects.reserve(scene.instances.size());
+
+    for (auto& s : scene.instances)
+    {
+        GPUObjectData obj{};
+        obj.transformID = 0;
+        obj.meshID = 0;
+        obj.materialID = 0;
+        obj.visibilityID = 0;
+
+        gpuObjects.push_back(obj);
+    }
+
+    uploader.uploadObjects(gpuObjects);
+    uploader.uploadTransforms({ glm::mat4(1.0f) });
+
+    // =========================================================
+    // 5. VAO SETUP (STATIC)
+    GLuint vao = 0, vbo = 0, ebo = 0;
+
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -148,127 +187,37 @@ int main()
                  cube.indices.data(),
                  GL_STATIC_DRAW);
 
-    // position
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
-    // normal
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void*)offsetof(Vertex, normal));
 
-    // uv
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void*)offsetof(Vertex, texCoord));
 
     glBindVertexArray(0);
 
-    SceneInstance inst;
-    inst.mesh = &cube;
-    inst.material = nullptr;
-    inst.transform = glm::mat4(1.0f);
+    // bind once
+    draw.bind(vao,
+              uploader.getDrawBuffer(),
+              uploader.getCounterBuffer());
 
-    scene.instances.push_back(inst);
-
-    // =======================
-    // GPU MESH UPLOAD  
-    MeshDrawData gpuDraw = uploader.uploadMesh(cube);
-
-    uploader.uploadDrawData(gpuDraw);
-
-    // std::vector<glm::vec4> bounds;
-    // bounds.push_back(glm::vec4(
-    //     mesh.boundingCenter,
-    //     mesh.boundingRadius
-    // ));
-    // uploader.uploadMeshBounds(bounds);
-#if 0
-    GPUObjectData objects{};
-    objects.transformID = 0;
-    objects.meshID = 0;
-    objects.materialID = 0;
-    objects.visibilityID = 0;
-
-    GPUTransformData transforms{};
-    transforms.model = glm::mat4(1.0f);
-#else
-    std::vector<GPUObjectData> objects;
-    std::vector<GPUTransformData> transforms;
-
-    int index = 0;
-
-    for (int z = 0; z < 3; z++)
-    {
-        for (int x = 0; x < 3; x++)
-        {
-            GPUObjectData obj{};
-            obj.transformID = index;
-            obj.meshID = 0;
-            obj.materialID = 0;
-            obj.visibilityID = 0;
-
-            objects.push_back(obj);
-
-            GPUTransformData t{};
-            t.model = glm::translate(
-                glm::mat4(1.0f),
-                glm::vec3(
-                    x * 2.5f,
-                    0.0f,
-                    -z * 2.5f
-                ));
-
-            transforms.push_back(t);
-
-            index++;
-        }
-    }
-#endif
-    std::vector<GPUObjectData> gpuObjects;
-    gpuObjects.reserve(scene.instances.size());
-
-    for (auto& inst : scene.instances)
-    {
-        GPUObjectData obj{};
-
-        obj.transformID = 0;   // or index mapping
-        obj.meshID = 0;        // TODO: map from mesh pointer
-        obj.materialID = 0;
-        obj.visibilityID = 0;
-
-        gpuObjects.push_back(obj);
-    }
-
-    uploader.uploadObjects(gpuObjects);
-    // uploader.uploadObjects(objects);
-    uploader.uploadTransforms(transforms);
-    draw.setVAO(vao);
-    // =======================
-    // MAIN LOOP
+    // =========================================================
+    // 6. MAIN LOOP
     while (!glfwWindowShouldClose(window))
-    {for(int i=1 ; i<2; i++)
-        {
+    {
         processInput(window, 0.016f);
 
         glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float aspect = (float)WIDTH / (float)HEIGHT;
-
         uploader.updateCamera(camera, aspect);
 
-        std::cout << "===== beforer renderer =====\n";
-
-        for (int i = 0; i <= 11; i++)
-        {
-            GLint buf = 0;
-            glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, i, &buf);
-
-            std::cout << "binding[" << i << "] = " << buf << "\n";
-        }
-
-        std::cout << "===== start renderer =====\n";
+        std::cout << "===== frame begin =====\n";
 
         renderer.render(
             scene,
@@ -278,13 +227,15 @@ int main()
             binding,
             vao
         );
-// glBindVertexArray(vao);
-// glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        std::cout << "===== frame end =====\n";
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-    }break;
     }
 
+    // =========================================================
+    // 7. SHUTDOWN
     glfwTerminate();
     return 0;
 }

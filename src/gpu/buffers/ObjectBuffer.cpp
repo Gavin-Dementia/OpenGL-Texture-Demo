@@ -21,7 +21,7 @@ void ObjectBuffer::upload(
 }
 
 void ObjectBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::ObjectBuffer);  }
+{    ssbo.bindBase(Binding::ObjectBuffer);  }
 
 size_t ObjectBuffer::size() const
 {    return ssbo.getSize() / sizeof(GPUObjectData);  }

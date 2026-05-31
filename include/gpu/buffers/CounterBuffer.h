@@ -3,14 +3,23 @@
 #include <glad/glad.h>
 #include "gpu/buffers/SSBO.h"
 
+struct GPUCounter
+{
+    GLuint drawCount;
+    GLuint instanceCount;
+};
+
 class CounterBuffer
 {
 public:
     void init();
-    void reset(GLuint value);
+    void reset();
     void bind() const;
 
+    void uploadInstanceCount(GLuint count);
+
     GLuint getID() const;
+    GLuint read() const;
 
 private:
     GLuint id = 0;

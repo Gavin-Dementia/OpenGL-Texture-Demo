@@ -28,78 +28,105 @@ void RendererGPU::render(
     BindingManager& binding,
     GLuint vao)
 {
-    FrameContext frame;
+    FrameContext frame{};
 
     debug.beginFrame();
 
-    // GLuint instanceCount = scene.getInstanceCount();
-    GLuint instanceCount = uploader.getInstanceBuffer().size();
-    GLuint groups = (instanceCount + 63) / 64;
-    std::cout << "uploader.getInstanceBuffer().size() = " << instanceCount << std::endl;
-    std::cout << "groups = " << groups << std::endl;
+    // =========================================================
+    // 0. CPU INSTANCE COUNT SNAPSHOT
+    frame.instanceCount = uploader.getInstanceBuffer().size();
 
-    tracker.setDispatch(groups);
+    std::cout << "[Frame] instanceCount = "
+              << frame.instanceCount << std::endl;
 
-    uploader.getCounterBuffer().reset(0);
-    // =========================
-    // 1. COMPUTE BINDING PHASE
+    // =========================================================
+    // 1. RESET GPU COUNTER (drawCount + instanceCount struct)
+    uploader.getCounterBuffer().reset();
+
+    // IMPORTANT: upload instanceCount BEFORE compute
+    uploader.getCounterBuffer().uploadInstanceCount(frame.instanceCount);
+
+    std::cout << "[Frame] counter reset + instanceCount uploaded" << std::endl;
+
+    // =========================================================
+    // 2. BIND FOR COMPUTE (FULL FRAME STATE)
     binding.bindForCompute(uploader);
 
-    std::cout << "===== SSBO BINDINGS =====\n";
+    // =========================================================
+    // 3. VISIBILITY PASS (COMPUTE)
+    visibility.execute(frame, scene);
 
-    for (int i = 0; i <= 11; i++)
+    std::cout << "[Frame] compute finished" << std::endl;
+
+    // =========================================================
+    // 4. GPU SYNC (ONLY ONCE)
+    glMemoryBarrier(
+        GL_SHADER_STORAGE_BARRIER_BIT |
+        GL_BUFFER_UPDATE_BARRIER_BIT
+    );
+
+    std::cout << "[Frame] memory barrier done" << std::endl;
+
+    // =========================================================
+    // 5. READBACK (DEBUG ONLY, NOT DRIVING GPU LOGIC)
     {
-        GLint buf = 0;
-        glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, i, &buf);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER,
+                     uploader.getCounterBuffer().getID());
+        std::cout << "[DEBUG] scene.instances = "
+            << scene.instances.size() << std::endl;
 
-        std::cout << "binding[" << i << "] = " << buf << "\n";
+        struct GPUCounter
+        {
+            GLuint drawCount;
+            GLuint instanceCount;
+        } counter{};
+
+        glGetBufferSubData(
+            GL_SHADER_STORAGE_BUFFER,
+            0,
+            sizeof(GPUCounter),
+            &counter
+        );
+
+        frame.drawCount = counter.drawCount;
+        frame.instanceCount = counter.instanceCount;
+
+        std::cout << "[Frame] GPU drawCount = "
+                  << frame.drawCount << std::endl;
+
+        std::cout << "[Frame] GPU instanceCount = "
+                  << frame.instanceCount << std::endl;
     }
-    
-    // =========================
-    // 2. COMPUTE PASS
-    visibility.execute(
-        scene,
-        uploader,
-        frame.drawCount
-    );
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
-                GL_COMMAND_BARRIER_BIT |
-                GL_BUFFER_UPDATE_BARRIER_BIT);
-
-    // =========================
-    // 3. VALIDATION AFTER COMPUTE
-    debug.validateComputeDispatch(scene.getInstanceCount());
-
-    tracker.setDrawCount(frame.drawCount);
-    debug.validateDrawCount(frame.drawCount);
-    // =========================
-    // 4. DRAW BINDING PHASE
+    // =========================================================
+    // 6. DRAW BINDING PHASE
     binding.bindForDraw(uploader);
-    draw.setVAO(vao);
 
-    // DrawElementsIndirectCommandBuffer cmd;
-    // glGetBufferSubData(GL_DRAW_INDIRECT_BUFFER, 0, sizeof(cmd), &cmd);
-    // std::cout <<"cmd.count = " << cmd.count << std::endl;
-    // std::cout <<"cmd.instanceCount = " << cmd.instanceCount << std::endl;
-    // std::cout <<"cmd.firstIndex = " << cmd.firstIndex << std::endl;
-    // std::cout <<"cmd.baseVertex = " << cmd.baseVertex << std::endl;
-    // std::cout <<"cmd.baseInstance = " << cmd.baseInstance << std::endl;
-    // std::cout << "frame.drawCount = " << frame.drawCount << "\n";
-    
-    // =========================
-    // 5. INDIRECT DRAW
-    draw.execute(
+    draw.bind(
+        vao,
         uploader.getDrawBuffer(),
-        frame.drawCount
+        uploader.getCounterBuffer()
     );
-    glMemoryBarrier(GL_COMMAND_BARRIER_BIT);
 
-    // =========================
-    // 6. FINAL VALIDATION
-    debug.validateIndirectBuffer(uploader.getDrawBuffer().getID());
+    // =========================================================
+    // 7. INDIRECT DRAW EXECUTION
+    if (frame.drawCount > 0)
+    {
+        std::cout << "[Frame] draw execute = "
+                  << frame.drawCount << std::endl;
 
+        draw.execute(frame.drawCount);
+    }
+    else
+    {
+        std::cout << "[Frame] skip draw (0)" << std::endl;
+    }
+
+    // =========================================================
+    // 8. END FRAME
     debug.endFrame();
+
+    std::cout << "[Frame] end\n" << std::endl;
 }
 
 void RendererGPU::drawIndirect(int drawCount)

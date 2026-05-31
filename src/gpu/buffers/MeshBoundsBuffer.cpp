@@ -12,7 +12,7 @@ void MeshBoundsBuffer::upload(const std::vector<glm::vec4>& bounds)
 }
 
 void MeshBoundsBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::MeshBoundsBuffer);  }
+{    ssbo.bindBase(Binding::MeshBoundsBuffer);  }
 
 GLuint MeshBoundsBuffer::getID() const
 {    return ssbo.getID();  }

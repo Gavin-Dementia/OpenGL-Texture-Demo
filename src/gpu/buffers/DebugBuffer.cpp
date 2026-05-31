@@ -12,7 +12,7 @@ void DebugBuffer::upload(const void* data, size_t size)
 }
 
 void DebugBuffer::bind() const
-{    ssbo.bindBase(Binding::SSBO::DebugBuffer);  }
+{    ssbo.bindBase(Binding::DebugBuffer);  }
 
 GLuint DebugBuffer::getID() const
 {    return ssbo.getID();  }
