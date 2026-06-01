@@ -1,6 +1,6 @@
 # OpenGL Texture Rendering Demo
 
-- C:\3Dproject\docs\gpu_pipeline_spec.md
+- ..\docs\gpu_pipeline_spec.md
 
 ## Features
 
