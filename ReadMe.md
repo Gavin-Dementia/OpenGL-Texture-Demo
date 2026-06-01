@@ -80,5 +80,5 @@ Status
 ---
 # demo.png
 
-![alt text]({D2CB5E8E-920F-4A7A-BE58-686FE143889F}.png)
+![alt text](demo.png)
 
