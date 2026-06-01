@@ -1,5 +1,7 @@
 # OpenGL Texture Rendering Demo
 
+- C:\3Dproject\docs\gpu_pipeline_spec.md
+
 ## Features
 
 - OpenGL 3.3 Core Profile
@@ -76,32 +78,7 @@ Status
 ✔ Renderer abstraction
 ```
 ---
+# demo.png
 
-## Phase 1 – opengl tutorial c++ ( ~FIN~ )
+![alt text]({D2CB5E8E-920F-4A7A-BE58-686FE143889F}.png)
 
-- cube rendering
-- texture mapping
-- basic lighting
-- camera system
-
-## Phase 2 – Engine Completion (In Progress)
-
-- Material system (Shader + Texture abstraction per object)
-- Render queue system (Opaque / Transparent / Debug pass)
-- Ownership cleanup (smart pointers / RAII transition)
-- Batch rendering optimization
-
-## Phase 3 – Ray Tracing Engine
-
-- CPU-based ray tracer
-- BVH acceleration structure
-- Mesh intersection system
-- Hybrid rasterization + ray tracing pipeline
-
-## Phase 4 (GPU Acceleration)
-
-- CUDA/OpenGL interop experiments
-- Particle system simulation
-- Compute shader-based rendering
-
-alone
