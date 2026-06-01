@@ -13,18 +13,18 @@ void Mesh::computeBounds()
     // ========================================
     // Compute AABB
 
-    glm::vec3 minP = vertices[0].position;
-    glm::vec3 maxP = vertices[0].position;
+    glm::vec3 minP = vertices[0].pos;
+    glm::vec3 maxP = vertices[0].pos;
 
     for (const auto& v : vertices)
     {
-        minP.x = std::min(minP.x, v.position.x);
-        minP.y = std::min(minP.y, v.position.y);
-        minP.z = std::min(minP.z, v.position.z);
+        minP.x = std::min(minP.x, v.pos.x);
+        minP.y = std::min(minP.y, v.pos.y);
+        minP.z = std::min(minP.z, v.pos.z);
 
-        maxP.x = std::max(maxP.x, v.position.x);
-        maxP.y = std::max(maxP.y, v.position.y);
-        maxP.z = std::max(maxP.z, v.position.z);
+        maxP.x = std::max(maxP.x, v.pos.x);
+        maxP.y = std::max(maxP.y, v.pos.y);
+        maxP.z = std::max(maxP.z, v.pos.z);
     }
 
     // ========================================
@@ -39,7 +39,7 @@ void Mesh::computeBounds()
     for (const auto& v : vertices)
     {
         float distSq =
-            glm::length2(v.position - boundingCenter);
+            glm::length2(v.pos - boundingCenter);
 
         if (distSq > maxDistSq)
             maxDistSq = distSq;

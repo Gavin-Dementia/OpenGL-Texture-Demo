@@ -20,17 +20,25 @@ void DrawPass::bind(GLuint vao_,
     counterBufferID = counterBuffer.getID();
 }
 
-void DrawPass::execute(GLuint drawCount)
+void DrawPass::execute(GLuint MAX_DRAWS)
 {
     shader.use();
     glBindVertexArray(vao);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, drawBufferID);
 
-    glMultiDrawElementsIndirect(
-        GL_TRIANGLES,
-        GL_UNSIGNED_INT,
-        nullptr,
-        drawCount,
-        0
-    );
+    // glMultiDrawElementsIndirect(
+    //     GL_TRIANGLES,
+    //     GL_UNSIGNED_INT,
+    //     nullptr,
+    //     MAX_DRAWS,
+    //     0
+    // );
+
+    glDrawElements(
+    GL_TRIANGLES,
+    36,
+    GL_UNSIGNED_INT,
+    0
+);
 }
 

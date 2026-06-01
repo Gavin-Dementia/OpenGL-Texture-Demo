@@ -1,8 +1,6 @@
 #include "gpu/backend/RendererGPU.h"
 #include "gpu/backend/BindingManager.h"
 #include "gpu/upload/SceneUploader.h"
-#include "gpu/pipeline/VisibilityPipeline.h"
-#include "gpu/pipeline/DrawPipeline.h"
 #include "graphics/Shader.h"
 #include "core/ShaderLoader.h"
 #include "scene/Scene.h"
@@ -20,113 +18,84 @@ void RendererGPU::init()
     std::cout << "RendererGPU init\n";
 }
 
-void RendererGPU::render(
-    Scene& scene,
-    SceneUploader& uploader,
-    VisibilityPass& visibility,
-    DrawPass& draw,
-    BindingManager& binding,
-    GLuint vao)
+void RendererGPU::render(Scene& scene,
+                         SceneUploader& uploader,
+                         BindingManager& binding,
+                         DrawPass& draw,
+                         GLuint vao)
 {
-    FrameContext frame{};
-
     debug.beginFrame();
 
-    // =========================================================
-    // 0. CPU INSTANCE COUNT SNAPSHOT
-    frame.instanceCount = uploader.getInstanceBuffer().size();
+    // =====================================================
+    // 1. CPU snapshot
+    uint32_t instanceCount =
+        uploader.getInstanceBuffer().size();
 
-    std::cout << "[Frame] instanceCount = "
-              << frame.instanceCount << std::endl;
-
-    // =========================================================
-    // 1. RESET GPU COUNTER (drawCount + instanceCount struct)
+    // =====================================================
+    // 2. reset counter
     uploader.getCounterBuffer().reset();
+    uploader.getCounterBuffer().uploadInstanceCount(instanceCount);
 
-    // IMPORTANT: upload instanceCount BEFORE compute
-    uploader.getCounterBuffer().uploadInstanceCount(frame.instanceCount);
+    Shader compute= ShaderLoader::loadCompute("cull.comp");
+    compute.use();
 
-    std::cout << "[Frame] counter reset + instanceCount uploaded" << std::endl;
-
-    // =========================================================
-    // 2. BIND FOR COMPUTE (FULL FRAME STATE)
+    // =====================================================
+    // 3. bind compute inputs
     binding.bindForCompute(uploader);
 
-    // =========================================================
-    // 3. VISIBILITY PASS (COMPUTE)
-    visibility.execute(frame, scene);
+    // =====================================================
+    // 4. GPU cull
+    glDispatchCompute((instanceCount + 63) / 64, 1, 1);
 
-    std::cout << "[Frame] compute finished" << std::endl;
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
+                    GL_COMMAND_BARRIER_BIT);
 
-    // =========================================================
-    // 4. GPU SYNC (ONLY ONCE)
-    glMemoryBarrier(
-        GL_SHADER_STORAGE_BARRIER_BIT |
-        GL_BUFFER_UPDATE_BARRIER_BIT
-    );
-
-    std::cout << "[Frame] memory barrier done" << std::endl;
-
-    // =========================================================
-    // 5. READBACK (DEBUG ONLY, NOT DRIVING GPU LOGIC)
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER,
-                     uploader.getCounterBuffer().getID());
-        std::cout << "[DEBUG] scene.instances = "
-            << scene.instances.size() << std::endl;
-
-        struct GPUCounter
-        {
-            GLuint drawCount;
-            GLuint instanceCount;
-        } counter{};
-
-        glGetBufferSubData(
-            GL_SHADER_STORAGE_BUFFER,
-            0,
-            sizeof(GPUCounter),
-            &counter
-        );
-
-        frame.drawCount = counter.drawCount;
-        frame.instanceCount = counter.instanceCount;
-
-        std::cout << "[Frame] GPU drawCount = "
-                  << frame.drawCount << std::endl;
-
-        std::cout << "[Frame] GPU instanceCount = "
-                  << frame.instanceCount << std::endl;
-    }
-
-    // =========================================================
-    // 6. DRAW BINDING PHASE
+    // =====================================================
+    // 5. bind draw
     binding.bindForDraw(uploader);
 
-    draw.bind(
-        vao,
-        uploader.getDrawBuffer(),
-        uploader.getCounterBuffer()
-    );
+    draw.bind(vao,
+              uploader.getDrawBuffer(),
+              uploader.getCounterBuffer());
 
-    // =========================================================
-    // 7. INDIRECT DRAW EXECUTION
-    if (frame.drawCount > 0)
-    {
-        std::cout << "[Frame] draw execute = "
-                  << frame.drawCount << std::endl;
+     {
+        GLuint c = 0;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, uploader.getCounterBuffer().getID());
+        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint), &c);
 
-        draw.execute(frame.drawCount);
-    }
-    else
-    {
-        std::cout << "[Frame] skip draw (0)" << std::endl;
-    }
+        std::cout << "[DEBUG] drawCount = " << c << std::endl;
 
-    // =========================================================
-    // 8. END FRAME
+
+        struct Cmd {
+            int count;
+            int instanceCount;
+            int firstIndex;
+            int baseVertex;
+            int baseInstance;
+        };
+
+        Cmd cmd{};
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, uploader.getDrawBuffer().getID());
+        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Cmd), &cmd);
+        std::cout << "[DEBUG] cmd.count = " << cmd.count << std::endl;
+        std::cout << "[DEBUG] cmd.instanceCount = " << cmd.instanceCount << std::endl;
+        std::cout << "[DEBUG] cmd.firstIndex = " << cmd.firstIndex << std::endl;
+        std::cout << "[DEBUG] cmd.baseVertex = " << cmd.baseVertex << std::endl;
+        std::cout << "[DEBUG] cmd.baseInstance = " << cmd.baseInstance << std::endl;
+        GLint vao = 0;
+        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
+        std::cout << "[DEBUG] VAO = " << vao << std::endl;
+        GLint ebo = 0;
+        glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &ebo);
+        std::cout << "[DEBUG] EBO binding = " << ebo << std::endl;
+    
+    }         
+
+    // =====================================================
+    // 6. indirect draw (NO CONDITION)
+    draw.execute(MAX_DRAWS);
+
     debug.endFrame();
-
-    std::cout << "[Frame] end\n" << std::endl;
 }
 
 void RendererGPU::drawIndirect(int drawCount)

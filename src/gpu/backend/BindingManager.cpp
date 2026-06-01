@@ -55,9 +55,6 @@ void BindingManager::bindForCommandBuilder(
     bindSSBO( Binding::DrawBuffer,      scene.getDrawBuffer().getID());
 }
 
-
-
-
 void BindingManager::reset()
 {
     for (int i = 0; i < 12; i++)

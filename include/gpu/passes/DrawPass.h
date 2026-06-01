@@ -28,8 +28,6 @@ private:
     GLuint drawBufferID = 0;
     GLuint counterBufferID = 0;
 
-    // cached state (optional debug)
-    GLuint lastDrawCount = 0;
 };
 
 #endif

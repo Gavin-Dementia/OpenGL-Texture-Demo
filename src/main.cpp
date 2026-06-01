@@ -19,7 +19,6 @@
 
 #include "scene/Scene.h"
 #include "gpu/upload/SceneUploader.h"
-#include "gpu/pipeline/VisibilityPipeline.h"
 #include "gpu/backend/RendererGPU.h"
 #include "gpu/layout/GPUObjectData.h"
 #include "gpu/layout/GPUTransformData.h"
@@ -188,15 +187,16 @@ int main()
                  GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        (void*)offsetof(Vertex, pos));
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                          (void*)offsetof(Vertex, normal));
+                        (void*)offsetof(Vertex, normal));
 
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                          (void*)offsetof(Vertex, texCoord));
+                        (void*)offsetof(Vertex, uv));
 
     glBindVertexArray(0);
 
@@ -207,7 +207,7 @@ int main()
 
     // =========================================================
     // 6. MAIN LOOP
-    while (!glfwWindowShouldClose(window))
+    do
     {
         processInput(window, 0.016f);
 
@@ -222,9 +222,8 @@ int main()
         renderer.render(
             scene,
             uploader,
-            visibility,
-            draw,
             binding,
+            draw,
             vao
         );
 
@@ -232,7 +231,24 @@ int main()
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-    }
+    }while (!glfwWindowShouldClose(window));
+
+//     while (!glfwWindowShouldClose(window))
+// {
+//     glfwPollEvents();
+
+//     int w,h;
+//     glfwGetFramebufferSize(window, &w, &h);
+
+//     std::cout << "FB size: " << w << "," << h << std::endl;
+
+//     glViewport(0,0,w,h);
+
+//     glClearColor(1,0,0,1);
+//     glClear(GL_COLOR_BUFFER_BIT);
+
+//     glfwSwapBuffers(window);
+// }
 
     // =========================================================
     // 7. SHUTDOWN

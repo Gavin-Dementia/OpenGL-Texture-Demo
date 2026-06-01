@@ -2,28 +2,18 @@
 
 layout(local_size_x = 64) in;
 
-// =========================
-// INSTANCE DATA
-
-struct Instance
+struct DrawCommand
 {
-    uint transformID;
-    uint meshID;
-    uint materialID;
-    uint visibilityID;
+    uint count;
+    uint instanceCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
 };
 
-// =========================
-// BUFFERS (MATCH YOUR BINDINGS)
-
-layout(std430, binding = 2) buffer MeshBoundsBuffer
+layout(std430, binding = 4) buffer DrawBuffer
 {
-    vec4 boundingSpheres[];
-};
-
-layout(std430, binding = 3) buffer InstanceBuffer
-{
-    Instance instances[];
+    DrawCommand commands[];
 };
 
 layout(std430, binding = 6) buffer CounterBuffer
@@ -32,65 +22,19 @@ layout(std430, binding = 6) buffer CounterBuffer
     uint instanceCount;
 } counter;
 
-layout(std430, binding = 8) buffer VisibilityBuffer
-{
-    uint instanceIndices[];
-};
-
-// =========================
-// CAMERA
-
-layout(std140, binding = 0) uniform CameraUBO
-{
-    mat4 view;
-    mat4 projection;
-    vec4 viewPos;
-};
-
-// =========================
-
-bool visibleTest(vec4 sphere, mat4 vp)
-{
-    vec4 c = vp * vec4(sphere.xyz, 1.0);
-    float w = c.w;
-
-    return (c.x > -w - sphere.w &&
-            c.x <  w + sphere.w &&
-            c.y > -w - sphere.w &&
-            c.y <  w + sphere.w &&
-            c.z > -w - sphere.w &&
-            c.z <  w + sphere.w);
-}
-
 void main()
 {
     uint id = gl_GlobalInvocationID.x;
 
-    // =========================================================
-    // IMPORTANT: use CPU-uploaded instanceCount
     if (id >= counter.instanceCount)
         return;
 
-    Instance inst = instances[id];
+    uint drawID = atomicAdd(counter.drawCount, 1u);
 
-    uint meshID = inst.meshID;
-
-    if (meshID >= boundingSpheres.length())
-        return;
-
-    mat4 vp = projection * view;
-
-    vec4 sphere = boundingSpheres[meshID];
-
-    bool visible = visibleTest(sphere, vp);
-
-    if (!visible)
-        return;
-
-    // =========================================================
-    // COMPACT WRITE (ATOMIC)
-    uint visibleID = atomicAdd(counter.drawCount, 1u);
-
-    instanceIndices[visibleID] = id;
+    commands[drawID].count = 36;
+    commands[drawID].instanceCount = 1;
+    commands[drawID].firstIndex = 0;
+    commands[drawID].baseVertex = 0;
+    commands[drawID].baseInstance = id;
 }
 
